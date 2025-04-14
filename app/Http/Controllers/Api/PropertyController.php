@@ -1,0 +1,691 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Grids\LandLordVerifyGrid;
+use App\Exports\PropertyExport;
+use App\Exports\Vipsdownload;
+use App\Exports\WaybillExport;
+use App\Exports\SummaryExport;
+use App\Grids\PropertiesGrid;
+use App\Http\Controllers\Controller;
+use App\Jobs\PropertyInBulk;
+use App\Jobs\PropertyEnvpBulk;
+use App\Jobs\PropertyNotice;
+use App\Jobs\PropertyStickers;
+use App\Logic\SystemConfig;
+use App\Models\BoundaryDelimitation;
+use App\Models\Property;
+use App\Models\Summary;
+use App\Models\PropertyAssessmentDetail;
+use App\Models\PropertyCategory;
+use App\Models\PropertyDimension;
+use App\Models\PropertyGeoRegistry;
+use App\Models\PropertyInaccessible;
+use App\Models\PropertyRoofsMaterials;
+use App\Models\PropertyType;
+use App\Models\PropertyUse;
+use App\Models\PropertyPayment;
+use App\Models\PropertyValueAdded;
+use App\Models\PropertyWallMaterials;
+use App\Models\PropertyZones;
+use App\Models\RegistryMeter;
+use App\Models\PropertyWindowType;
+use App\Models\LandlordDetail;
+use App\Models\UserTitleTypes;
+use App\Models\PropertySanitationType;
+use App\Models\AdjustmentValue;
+use App\Models\Adjustment;
+use App\Models\Swimming;
+use App\Models\User;
+use App\Models\Bulk;
+use App\Models\District;
+use App\Models\InaccessibleProperty;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Twilio;
+use App\Notifications\PaymentRequestSMS;
+use DB;
+use App\Exports\BulkExport;
+use App\Imports\BulkImport;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Models\SmsToProperty;
+use App\Models\CounsilAdjustmentGroupA;
+use App\Models\PropertyToCounsilGroupA;
+use App\UserAssignedProperty;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
+
+ini_set('memory_limit','512M');
+
+class PropertyController extends Controller
+{
+    // public function index()
+    // {
+    //     $response = [];
+    //     try {
+    //         $response['property'] = Property::with([
+    //             'user' => function ($query) {
+    //                 $query->select('id', 'first_name', 'last_name');
+    //             },
+    //             'landlordFew',
+    //             'geoRegistry',
+    //             'occupancies',
+    //             'propertyInaccessible',
+    //             'payments',
+    //             'districts',
+    //             'images',
+    //             'assessment',
+    //         ])->paginate(10);
+
+
+
+
+    //         $response['success'] = true;
+    //         return $response;
+            
+    //     } catch (Exception $e) {
+    //         $response['error'] = $e->getMessage();
+    //         return Response::json($response); 
+    //     }
+    // }
+
+
+// public function index2(Request $request): JsonResponse
+// {
+//     return response()->json(['message' => abc()]);
+// }
+
+
+public function index(Request $request): JsonResponse
+{
+    try {
+        $user = Auth::guard('sanctum')->user();
+        $data=[];
+        //  return response()->json([
+        //     'user' => $user->super_admin,
+        // ]);
+        $query = Property::with([
+            'user:id,first_name,last_name',
+            'landlordFew',
+            'geoRegistry',
+            'occupancies',
+            'propertyInaccessible',
+            'payments',
+            'districts',
+            'images',
+            'assessment',
+        ]);
+
+
+
+
+        // Role-based district filter (Key: role_based_district)
+        // if (!request()->user()->hasRole('Super Admin') && !request()->user()->hasRole('Super Admin Cus')) {
+        //     $query->where('district', request()->user()->assign_district);
+        // }
+        if (!$user || ($user->super_admin != 1 && $user->super_admin_cus != 1)) {
+            $query->where('district', $user?->assign_district);
+        }
+
+        // Filter by Demand Draft Year (Key: demand_draft_year)  Done 27
+        if ($request->filled('demand_draft_year')) {
+            $query->whereHas('assessment', function ($q) use ($request) {
+                $q->whereYear('created_at', $request->demand_draft_year);
+            });
+        }
+
+        // Filter by Printed Status (Key: is_printed)  done 46
+        if ($request->filled('is_printed')) {
+            $query->whereHas('assessment', function ($q) use ($request) {
+                $q->when($request->input('is_printed') == '1', fn($q) => $q->whereNotNull('last_printed_at'));
+                $q->when($request->input('is_printed') == '0', fn($q) => $q->whereNull('last_printed_at'));
+            });
+        }
+
+        // Filter by Gated Community Status (Key: gated_community)  done 47, 48
+        if ($request->filled('gated_community')) {
+            $query->whereHas('assessment', function ($q) use ($request) {
+                $q->where('gated_community', $request->gated_community);
+            });
+        }
+
+        // Filter by District ID (Fixed to 13) (Key: fixed_district_13)
+        // $query->whereHas('districts', function ($q) {
+        //     $q->where('id', 13);
+        // });
+
+        // Filter by Property Creation Date  //done 36, 37
+        if ($request->start_date && $request->end_date) {
+            $query->whereBetween('properties.created_at', [
+                Carbon::parse($request->start_date)->startOfDay(),
+                Carbon::parse($request->end_date)->endOfDay()
+            ]);
+        } elseif ($request->start_date || $request->end_date) {
+            $query->when($request->start_date, fn($q) => $q->whereBetween('properties.created_at', [Carbon::parse($request->start_date), Carbon::now()]));
+            $query->when($request->end_date, fn($q) => $q->whereBetween('properties.created_at', [Carbon::now()->subYear(5), Carbon::parse($request->end_date)->endOfDay()]));
+        }
+
+        // Filter by Unpaid Properties Done 38,39
+       if ($request->unpaid_start_date && $request->unpaid_end_date) {
+            $year = date('Y', strtotime($request->unpaid_start_date));
+            $query->whereYear('created_at', $year)->doesntHave('payments');
+        }
+
+
+        // Filter by Payment Status (Key: payment_status) // done 42
+        if ($payment_status = $request->input('paid')) {
+            $query->{$payment_status == 'paid' ? 'whereHas' : 'doesntHave'}('payments');
+        }
+
+        // Filter by Paid Date Range (Key: paid_date_range) //done 40, 41
+        if ($request->paid_start_date && $request->paid_end_date) {
+            $query->whereHas('payments', function ($q) use ($request) {
+                $q->whereBetween('property_payments.created_at', [
+                    Carbon::parse($request->paid_start_date)->startOfDay(),
+                    Carbon::parse($request->paid_end_date)->endOfDay()
+                ]);
+            });
+        }
+
+        // Filter by Occupancy Type (Key: occupancy_type)  Done 17
+        if ($request->filled('occupancy_type')) {
+            $query->whereHas('occupancies', fn($q) => $q->where('type', $request->occupancy_type));
+        }
+
+        // Filter by Council Adjustment (Key: council_adjustment) //done // 2
+        if ($request->filled('counsil_adjustmnt')) {
+            $allDataFromCounsilTable = PropertyToCounsilGroupA::pluck('property_id')->toArray();
+            $query->{$request->counsil_adjustmnt == 'Yes' ? 'whereIn' : 'whereNotIn'}('properties.id', $allDataFromCounsilTable);
+        }
+
+        // Filter by Property ID (Key: property_id) //done // 1
+        if ($request->filled('property_id')) {
+            $property_ids = explode(",", $request->property_id);
+            $query->whereIn('properties.id', $property_ids);
+        }
+
+
+
+
+        
+        // Apply filters based on request parameters
+        // done 14
+        if ($request->filled('town')) {
+            $query->where('properties.section', $request->town);
+        }
+         
+         //done 10
+        if ($request->filled('street_name')) {
+            $query->where('properties.street_name', 'like', "%{$request->street_name}%");
+        }
+         
+         // done 11
+        if ($request->filled('street_number')) {
+            $query->where('properties.street_number', $request->street_number);
+        }
+        
+        // done 12
+        if ($request->filled('postcode')) {
+            $query->where('properties.postcode', $request->postcode);
+        }
+         
+         // done 13
+        if ($request->filled('ward')) {
+            $query->where('properties.ward', $request->ward);
+        }
+
+        if ($request->filled('district')) {
+            $query->where('properties.district', $request->district);
+        }
+
+        if ($request->filled('province')) {
+            $query->where('properties.province', $request->province);
+        }
+         
+
+         //done 18
+        if ($request->filled('chiefdom')) {
+            $query->where('properties.chiefdom', $request->chiefdom);
+        }
+        
+        //done 19
+        if ($request->filled('constituency')) {
+            $query->where('properties.constituency', $request->constituency);
+        }
+
+        // Property Accessibility Filter  // done 15
+        if ($request->is_accessible == "0") {
+            $query->where('is_property_inaccessible', 0);
+        }
+
+        if ($request->is_accessible == "1") {
+            $query->where('is_property_inaccessible', 1);
+        }
+
+        // Demand Draft Delivery Status Filter //done 43
+        if ($request->is_draft_delivered == "0") {
+            $query->whereHas('assessment', function ($q) {
+                $q->whereYear('created_at', now()->format('Y'))
+                  ->whereNull('demand_note_delivered_at');
+            });
+        }
+
+        if ($request->is_draft_delivered == "1") { //done 43 , 44, 45
+            $query->whereHas('assessment', function ($q) use ($request) {
+                $year = now()->format('Y');
+
+                if ($request->dd_start_date && $request->dd_end_date) {
+                    $q->whereYear('created_at', $year)
+                      ->whereBetween('demand_note_delivered_at', [
+                          Carbon::parse($request->dd_start_date),
+                          Carbon::parse($request->dd_end_date)
+                      ]);
+                } elseif ($request->dd_start_date) {
+                    $q->whereYear('created_at', $year)
+                      ->whereBetween('demand_note_delivered_at', [
+                          Carbon::parse($request->dd_start_date),
+                          now()
+                      ]);
+                } elseif ($request->dd_end_date) {
+                    $q->whereYear('created_at', $year)
+                      ->whereBetween('demand_note_delivered_at', [
+                          now()->subYear(5),
+                          Carbon::parse($request->dd_end_date)
+                      ]);
+                } else {
+                    $q->whereYear('created_at', $year)
+                      ->whereNotNull('demand_note_delivered_at');
+                }
+            });
+        }
+
+
+
+
+
+
+
+
+
+
+        // Apply filters based on request parameters
+        if ($request->filled('town')) {
+            $query->where('properties.section', $request->town);
+        }
+         
+         // done 10
+        if ($request->filled('street_name')) {
+            $query->where('properties.street_name', 'like', "%{$request->street_name}%");
+        }
+
+        if ($request->filled('street_number')) {
+            $query->where('properties.street_number', $request->street_number);
+        }
+
+        if ($request->filled('postcode')) {
+            $query->where('properties.postcode', $request->postcode);
+        }
+
+        if ($request->filled('ward')) {
+            $query->where('properties.ward', $request->ward);
+        }
+        
+        // done 20
+        if ($request->filled('district')) {
+            $query->where('properties.district', $request->district);
+        }
+        
+        // done 21
+        if ($request->filled('province')) {
+            $query->where('properties.province', $request->province);
+        }
+
+        if ($request->filled('chiefdom')) {
+            $query->where('properties.chiefdom', $request->chiefdom);
+        }
+
+        if ($request->filled('constituency')) {
+            $query->where('properties.constituency', $request->constituency);
+        }
+
+        // Digital Address Filters
+        if ($request->filled('digital_address')) {
+            $query->where('properties.id', $request->digital_address);
+        }
+
+        if ($request->filled('old_digital_address')) {
+            $query->where('properties.id', $request->old_digital_address);
+        }
+
+        // Property Completion Status Done 26
+        if ($request->filled('is_completed')) {
+            $query->where('properties.is_completed', $request->is_completed == 'yes');
+        }
+
+        // Property Type  Done 22
+        if ($request->filled('type')) {
+            $query->whereHas('types', function ($q) use ($request) {
+                $q->where('id', $request->type);
+            });
+        }
+
+        // Wall Material // done 23
+        if ($request->filled('wall_material')) {
+            $query->whereHas('assessment', function ($q) use ($request) {
+                $q->where('property_wall_materials', $request->wall_material);
+            });
+        }
+
+        // Compound Name  //Done 28
+        if ($request->filled('compound_name')) {
+            $query->whereHas('assessment', function ($q) use ($request) {
+                $q->where('compound_name', 'like', "%{$request->compound_name}%");
+            });
+        }
+
+        // Property Price Range // Done 6 and 7
+        if ($request->filled('form_price') && $request->filled('to_price')) {
+            $query->whereHas('assessment', function ($q) use ($request) {
+                $q->whereBetween('property_rate_without_gst', [$request->form_price, $request->to_price])
+                  ->whereYear('created_at', $request->demand_draft_year);
+            });
+        }
+
+        // Payee Name //done 8
+        if ($request->filled('payee_name')) {
+            $query->whereHas('payments', function ($q) use ($request) {
+                $q->where('payee_name', 'like', "%{$request->payee_name}%");
+            });
+        }
+
+        // Payment Method //Done 9
+        if ($request->filled('payment_method')) {
+            $query->whereHas('payments', function ($q) use ($request) {
+                $q->where('payment_type', 'like', "%{$request->payment_method}%");
+            });
+        }
+
+        // Roof Material //done 24
+        if ($request->filled('roof_material')) {
+            $query->whereHas('assessment', function ($q) use ($request) {
+                $q->where('roofs_materials', $request->roof_material);
+            });
+        }
+
+        // Property Dimension
+        if ($request->filled('property_dimension')) {
+            $query->whereHas('assessment', function ($q) use ($request) {
+                $q->where('property_dimension', $request->property_dimension);
+            });
+        }
+
+        // Value Added  done 25
+        if ($request->filled('value_added')) {
+            $query->whereHas('valueAdded', function ($q) use ($request) {
+                $q->where('id', $request->value_added);
+            });
+        }
+
+        // Property Inaccessible
+        // done 16
+        if ($request->filled('property_inaccessible')) {
+            $query->whereHas('propertyInaccessible', function ($q) use ($request) {
+                $q->where('id', $request->property_inaccessible);
+            });
+        }
+
+        // Landlord Filters //done 29 , 30
+        $query->whereHas('landlord', function ($q) use ($request) {
+            if ($request->filled('owner_first_name')) {
+                $q->where('first_name', 'like', "%{$request->owner_first_name}%");
+            }
+
+            if ($request->filled('owner_last_name')) {
+                $q->where('surname', 'like', "%{$request->owner_last_name}%");
+            }
+
+            if ($request->filled('mobile')) {
+                $q->where('mobile_1', $request->mobile);
+            }
+        });
+
+        // // Occupancy Filters  done 31, 32,33
+        $query->whereHas('occupancy', function ($q) use ($request) {
+            if ($request->filled('tenant_first_name')) {
+                $q->where('tenant_first_name', 'like', "%{$request->tenant_first_name}%");
+            }
+
+            if ($request->filled('tenant_middle_name')) {
+                $q->where('middle_name', 'like', "%{$request->tenant_middle_name}%");
+            }
+
+            if ($request->filled('tenant_last_name')) {
+                $q->where('surname', 'like', "%{$request->tenant_last_name}%");
+            }
+        });
+
+        // Landlord Telephone Number  done 34
+        if ($request->filled('telephone_number')) {
+            $query->whereHas('landlord', function ($q) use ($request) {
+                $q->where('mobile_1', 'like', "%{$request->telephone_number}%");
+            });
+        }
+
+        // Open Location Code  //done // 3
+        if ($request->filled('open_location_code')) {
+            $query->whereHas('geoRegistry', function ($q) use ($request) {
+                $q->where('open_location_code', $request->open_location_code);
+            });
+        }
+
+
+
+
+        // Filter by user name //done 35
+        if ($request->filled('name')) {
+            $query->whereHas('user', function ($q) use ($request) {
+                $q->where('name', 'like', "%{$request->name}%");
+            });
+        }
+
+        // Organization Type Filter  Done // 4 AND 5
+        if ($request->input('is_organization') == 1 && $request->filled('organization_type')) {
+            $query->where('organization_type', $request->organization_type)
+                  ->where('is_organization', true);
+        }
+
+        // Non-organization Filter
+        if ($request->input('is_organization') == '0') {
+            $query->where('is_organization', false);
+        }
+
+
+
+
+
+
+        //  data to load the page with
+        // $organizationTypes = collect(json_decode(file_get_contents(storage_path('data/organizationTypes.json')), true))->pluck('label', 'value');
+        $data['organizationTypes'] = [];//$organizationTypes;
+
+        $data['types'] = PropertyType::pluck('label', 'id')->prepend('Property Type', '')->toArray();
+        $data['wallMaterial'] = PropertyWallMaterials::pluck('label', 'id')->prepend('Wall Material', '')->toArray();
+        $data['roofMaterial'] = PropertyRoofsMaterials::pluck('label', 'id')->prepend('Roof Material', '')->toArray();
+        $data['propertyDimension'] = PropertyDimension::pluck('label', 'id')->prepend('Dimensions', '')->toArray();
+        $data['valueAdded'] = PropertyValueAdded::where('is_active', true)->pluck('label', 'id')->prepend('Value Added', '')->toArray();
+        $data['town'] = BoundaryDelimitation::distinct()->orderBy('section')->pluck('section', 'section')->prepend('Select Town', '')->toArray();
+         $data['occupancy_type'] = ['Owned Tenancy' => 'Owned Tenancy', 'Rented House' => 'Rented House', 'Unoccupied House' => 'Unoccupied House'];
+
+
+
+
+
+          // if ($user->hasRole('Super Admin')) {
+            if ($user && $user->super_admin == 1) {
+                if (getPropertyWardPermission('property_filter')) {
+                    $user_assigned_property = UserAssignedProperty::where('user_id', \Auth::guard('admin')->user()->id)->pluck('ward_id');
+                    $data['ward'] = BoundaryDelimitation::whereIn('ward', $user_assigned_property)
+                        ->orderBy('ward')
+                        ->pluck('ward', 'ward')
+                        ->sort()
+                        ->prepend('Select All Ward', '');
+                } else {
+                    $data['ward'] = BoundaryDelimitation::distinct()
+                        ->orderBy('ward')
+                        ->pluck('ward', 'ward')
+                        ->sort()
+                        ->prepend('Select All Ward', '');
+                }
+
+                $data['district'] = BoundaryDelimitation::distinct()->orderBy('district')->pluck('district', 'district')->sort()->prepend('Select District', '');
+                $data['province'] = BoundaryDelimitation::distinct()->orderBy('province')->pluck('province', 'province')->sort()->prepend('Select Province', '');
+                $data['chiefdom'] = BoundaryDelimitation::distinct()->orderBy('chiefdom')->pluck('chiefdom', 'chiefdom')->sort()->prepend('Select Chiefdom', '');
+                $data['constituency'] = BoundaryDelimitation::distinct()->orderBy('constituency')->pluck('constituency', 'constituency')->sort()->prepend('Select Constituency', '');
+            } elseif ($user->hasRole('Super Admin Cus')) {
+                $data['district'] = BoundaryDelimitation::distinct()->orderBy('district')->pluck('district', 'district')->sort()->prepend('Select District', '');
+                $data['province'] = BoundaryDelimitation::distinct()->orderBy('province')->pluck('province', 'province')->sort()->prepend('Select Province', '');
+                $data['ward'] = BoundaryDelimitation::distinct()->orderBy('ward')->pluck('ward', 'ward')->sort()->prepend('Select All Ward', '');
+                $data['chiefdom'] = BoundaryDelimitation::distinct()->orderBy('chiefdom')->pluck('chiefdom', 'chiefdom')->sort()->prepend('Select Chiefdom', '');
+                $data['constituency'] = BoundaryDelimitation::distinct()->orderBy('constituency')->pluck('constituency', 'constituency')->sort()->prepend('Select Constituency', '');
+            } else {
+                $data['district'] = BoundaryDelimitation::where('district', $user->assign_district)
+                    ->distinct()
+                    ->orderBy('district')
+                    ->pluck('district', 'district')
+                    ->sort()
+                    ->prepend('Select District', '');
+
+                $data['province'] = BoundaryDelimitation::where('district', $user->assign_district)
+                    ->distinct()
+                    ->orderBy('province')
+                    ->pluck('province', 'province')
+                    ->sort()
+                    ->prepend('Select Province', '');
+
+                $data['ward'] = BoundaryDelimitation::where('district', $user->assign_district)
+                    ->distinct()
+                    ->orderBy('ward')
+                    ->pluck('ward', 'ward')
+                    ->sort()
+                    ->prepend('Select All Ward', '');
+
+                $data['chiefdom'] = BoundaryDelimitation::where('district', $user->assign_district)
+                    ->distinct()
+                    ->orderBy('chiefdom')
+                    ->pluck('chiefdom', 'chiefdom')
+                    ->sort()
+                    ->prepend('Select Chiefdom', '');
+
+                $data['constituency'] = BoundaryDelimitation::where('district', $user->assign_district)
+                    ->distinct()
+                    ->orderBy('constituency')
+                    ->pluck('constituency', 'constituency')
+                    ->sort()
+                    ->prepend('Select Constituency', '');
+            }
+
+
+
+            $data['digital_address'] = PropertyGeoRegistry::distinct()
+                ->orderBy('property_id')
+                ->pluck('digital_address', 'digital_address')
+                ->sort()
+                ->prepend('Select Digital Address', '');
+
+            $data['request'] = $request->all();
+
+            $data['property_inaccessibles'] = PropertyInaccessible::where('is_active', 1)
+                ->pluck('label', 'id')
+                ->prepend('Select Property Inaccessible');
+
+            $data['street_names'] = Property::distinct('street_name')
+                ->orderBy('street_name')
+                ->pluck('street_name', 'street_name');
+
+            $data['street_numbers'] = Property::distinct('street_number')
+                ->orderBy('street_number')
+                ->pluck('street_number', 'street_number');
+
+            $data['postcodes'] = Property::distinct('postcode')
+                ->orderBy('postcode')
+                ->pluck('postcode', 'postcode');
+
+            // $data['organizationTypes'] = $organizationTypes ?? [];
+
+
+
+                if ($request->download_pdf_in_bulk == 1) {
+                $bulkDemand = new PropertyInBulk();
+                return $bulkDemand->handle(Property::all(), $request->demand_draft_year);
+            }
+
+            if ($request->download_stickers == 1) {
+                $stickers = new PropertyStickers();
+
+                $nProperty = Property::withAssessmentCalculation($request->input('demand_draft_year'))
+                    ->having('current_year_payment', '>', 0)
+                    ->having('total_payable_due', 0)
+                    ->orderBy('total_payable_due')
+                    ->get();
+
+                return $stickers->handle($nProperty, $request);
+            }
+
+            if ($request->download_notice == 1) {
+                $notices = new PropertyNotice();
+                return $notices->handle(Property::latest()->get());
+            }
+
+            if ($request->download_excel_in_bulk == 1) {
+                $properties = Property::with([
+                    'assessment' => function ($query) use ($request) {
+                        $query->whereYear('created_at', $request->input('demand_draft_year'))
+                            ->with(
+                                'categories', 'types', 'valuesAdded', 
+                                'dimension', 'wallMaterial', 'roofMaterial', 
+                                'zone', 'swimming'
+                            );
+                    },
+                ])->whereHas('assessment', function ($query) use ($request) {
+                    $query->whereYear('created_at', $request->input('demand_draft_year'));
+                })->get();
+
+                return \Excel::download(new PropertyExport($properties), now()->format('Y-m-d-H-i-s') . '-mod-properties.xlsx');
+            }
+
+            if ($request->bulk_demand == 2 && Property::count() > 0) {
+                $coordinates = $this->getMapCoordinates();
+                $points = $coordinates[0];
+                $center = $coordinates[1];
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Map coordinates retrieved successfully',
+                    'points' => $points,
+                    'center' => $center,
+                ]);
+            }
+
+           
+
+        // Paginate results
+        $properties = $query->paginate(10);
+
+        return response()->json([
+            'success' => true,
+            'property' => $properties,
+            'data'=>$data,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
+
+}
