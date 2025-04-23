@@ -123,7 +123,7 @@ public function index(Request $request): JsonResponse
 
         // Role-based district filter (Key: role_based_district)
         // if (!request()->user()->hasRole('Super Admin') && !request()->user()->hasRole('Super Admin Cus')) {
-        //     $query->where('district', request()->user()->assign_district);
+        //     $query->where('district', $user->assign_district);
         // }
         if (!$user || ($user->super_admin != 1 && $user->super_admin_cus != 1)) {
             $query->where('district', $user?->assign_district);
@@ -543,7 +543,7 @@ public function index(Request $request): JsonResponse
                 $data['province'] = BoundaryDelimitation::distinct()->orderBy('province')->pluck('province', 'province')->sort()->prepend('Select Province', '');
                 $data['chiefdom'] = BoundaryDelimitation::distinct()->orderBy('chiefdom')->pluck('chiefdom', 'chiefdom')->sort()->prepend('Select Chiefdom', '');
                 $data['constituency'] = BoundaryDelimitation::distinct()->orderBy('constituency')->pluck('constituency', 'constituency')->sort()->prepend('Select Constituency', '');
-            } elseif ($user->hasRole('Super Admin Cus')) {
+            } elseif ($user->super_admin_cus != 1) {
                 $data['district'] = BoundaryDelimitation::distinct()->orderBy('district')->pluck('district', 'district')->sort()->prepend('Select District', '');
                 $data['province'] = BoundaryDelimitation::distinct()->orderBy('province')->pluck('province', 'province')->sort()->prepend('Select Province', '');
                 $data['ward'] = BoundaryDelimitation::distinct()->orderBy('ward')->pluck('ward', 'ward')->sort()->prepend('Select All Ward', '');
@@ -684,6 +684,111 @@ public function index(Request $request): JsonResponse
             'error' => $e->getMessage()
         ], 500);
     }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public function propertyDetails(Request $request){
+     try {
+        $user = Auth::guard('sanctum')->user();
+        $property = Property::where('id',$request->property_id)->first();
+        if(!$property){
+            return response()->json([
+                    'success' => false,                   
+                    'message'=>"Property not found.",
+                ]);
+        }
+
+        // Generate current year assessment if missing
+        // $property->generateAssessments(); //confussed
+
+         // load sub modals
+         $property = Property::with([
+                'images',
+                'occupancy',
+                'assessments' => function ($query) {
+                    $query->with(['types', 'valuesAdded', 'categories'])->latest();
+                },
+                'geoRegistry',
+                'payments',
+                'landlord',
+                'propertyInaccessible'
+            ])->where('id',$request->property_id)->first();
+
+        $data=[];
+        
+        if($user->super_admin == 1){
+            $data['town'] = BoundaryDelimitation::distinct()->orderBy('section')->pluck('section', 'section');
+            $data['chiefdom'] = BoundaryDelimitation::distinct()->orderBy('chiefdom')->pluck('chiefdom', 'chiefdom')->sort();
+            $data['district'] = BoundaryDelimitation::distinct()->orderBy('district')->pluck('district', 'district')->sort();
+            $data['province'] = BoundaryDelimitation::distinct()->orderBy('province')->pluck('province', 'province')->sort();
+            $data['ward'] = BoundaryDelimitation::distinct()->orderBy('ward')->pluck('ward', 'ward')->sort();
+            $data['constituency'] = BoundaryDelimitation::distinct()->orderBy('constituency')->pluck('constituency', 'constituency')->sort();
+        }else{
+             $data['town'] = BoundaryDelimitation::distinct()->where('district', $user->assign_district)->orderBy('section')->pluck('section', 'section');
+            $data['chiefdom'] = BoundaryDelimitation::distinct()->where('district', $user->assign_district)->orderBy('chiefdom')->pluck('chiefdom', 'chiefdom')->sort();
+            $data['district'] = BoundaryDelimitation::distinct()->where('district', $user->assign_district)->orderBy('district')->pluck('district', 'district')->sort();
+            $data['province'] = BoundaryDelimitation::distinct()->where('district', $user->assign_district)->orderBy('province')->pluck('province', 'province')->sort();
+            $data['ward'] = BoundaryDelimitation::distinct()->where('district', $user->assign_district)->orderBy('ward')->pluck('ward', 'ward')->sort();
+            $data['constituency'] = BoundaryDelimitation::distinct()->where('district', $user->assign_district)->orderBy('constituency')->pluck('constituency', 'constituency')->sort();
+        }
+
+
+
+
+        $data['categories'] = PropertyCategory::distinct()->where('is_active', 1)->pluck('label', 'id');
+        $data['types'] = PropertyType::distinct()->where('is_active', 1)->pluck('label', 'id');
+        $data['window_types'] = PropertyWindowType::distinct()->where('is_active', 1)->pluck('label', 'id');
+        $data['wall_materials'] = PropertyWallMaterials::distinct()->where('is_active', 1)->pluck('label','id');
+        $data['sanitation'] = PropertySanitationType::pluck('label','id');
+        $data['adjustment_values'] = Adjustment::pluck('name','id');
+        $data['roofs_materials'] = PropertyRoofsMaterials::distinct()->where('is_active', 1)->pluck('label', 'id');
+        $data['property_dimension'] = PropertyDimension::distinct()->where('is_active', 1)->pluck('label', 'id');
+        $data['value_added'] = PropertyValueAdded::distinct()->where('is_active', 1)->pluck('label', 'id');
+        $data['property_use'] = PropertyUse::distinct()->where('is_active', 1)->pluck('label', 'id');
+        $data['zone'] = PropertyZones::distinct()->where('is_active', 1)->pluck('label', 'id');
+        $data['occupancy_type'] = ['Owned Tenancy' => 'Owned Tenancy', 'Rented House' => 'Rented House', 'Unoccupied House' => 'Unoccupied House'];
+        $data['id_type'] = ['National ID' => 'National ID', 'Passport' => 'Passport', 'Driver’s License' => 'Driver’s License', 'Voter ID' => 'Voter ID', 'other' => 'Other'];
+        $data['org_type'] = ['Government' => 'Government', 'NGO' => 'NGO', 'Business' => 'Business', 'School' => 'School', 'Religious' => 'Religious', 'Diplomatic Mission' => 'Diplomatic Mission', 'Hospital' => 'Hospital', 'Other' => 'Other'];
+        $data['gender'] = ['m' => 'Male', 'f' => 'Female'];
+        $data['usertitles'] = UserTitleTypes::distinct()->where('is_active', 1)->pluck('label', 'id');
+        $data['title'] = 'Details';
+        $data['property'] = $property;
+        $data['selected_occupancies'] = $property->occupancies->pluck('occupancy_type')->toArray();
+
+        $data['property_inaccessable'] = PropertyInaccessible::where('is_active', 1)->pluck('label', 'id')->toArray();
+        $data['selected_property_inaccessable'] = $property->propertyInaccessible()->pluck('id')->toArray();
+        $data['swimmings'] = Swimming::where('is_active', 1)->pluck('label', 'id')->prepend('Select', '')->toArray();
+        
+        $data['ab_2020_data']=PropertyAssessmentDetail::where('created_at', '>', '2019-12-12')->where('property_id',$request->property)->first();
+
+
+         return response()->json([
+            'success' => true,
+            'property' => $property,
+            'data'=>$data,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
+
 }
 
 

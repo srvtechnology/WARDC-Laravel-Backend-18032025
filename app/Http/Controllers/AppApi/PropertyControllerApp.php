@@ -70,6 +70,7 @@ class PropertyControllerApp extends Controller
 		// dd(1);
 		$assessment_images = new PropertyAssessmentDetail();
 		$user = Auth::guard('sanctum')->user();
+		// dd($user);
 		Log::debug($request->all());
 
 		$propertyId = @$request->input('property_id');
