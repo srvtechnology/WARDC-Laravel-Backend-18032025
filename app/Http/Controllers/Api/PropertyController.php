@@ -703,7 +703,7 @@ public function index(Request $request): JsonResponse
 
 
 public function propertyDetails(Request $request){
-     try {
+     // try {
         $user = Auth::guard('sanctum')->user();
         $property = Property::where('id',$request->property_id)->first();
         if(!$property){
@@ -721,10 +721,13 @@ public function propertyDetails(Request $request){
                 'images',
                 'occupancy',
                 'assessments' => function ($query) {
-                    $query->with(['types', 'valuesAdded', 'categories'])->latest();
+                    $query->with(['types', 'valuesAdded', 'categories','propertyCategoryDetails'])->latest();
                 },
+                'assessments.payments',
+                // 'assessments.propertyCategoryDetails',
                 'geoRegistry',
                 'payments',
+                'payments.admin',
                 'landlord',
                 'propertyInaccessible'
             ])->where('id',$request->property_id)->first();
@@ -777,17 +780,53 @@ public function propertyDetails(Request $request){
         $data['ab_2020_data']=PropertyAssessmentDetail::where('created_at', '>', '2019-12-12')->where('property_id',$request->property)->first();
 
 
+       $allAssesments = PropertyAssessmentDetail::where('property_id', $request->property_id)
+            ->select('id','created_at','arrear_calc', 'penalty as penalty_amount','due','property_rate_without_gst','property_rate_with_gst','demand_note_recipient_photo')
+            ->get();
+
+
+        foreach ($allAssesments as $key => $val) {
+            $year = \Carbon\Carbon::parse($val->created_at)->year;
+
+            $payment = PropertyPayment::where('property_id', $request->property_id)
+                ->whereYear('created_at', $year)
+                ->value('total'); 
+
+            $allAssesments[$key]['paymentAmount'] = $payment ?? 0;
+        }
+
+
+       // Council adjustments
+            $adjustments = DB::table('property_to_counsil_adjustment_group_a')
+                ->where('property_id', $request->property_id)
+                ->get();
+
+            foreach ($adjustments as $key => $val) {
+                $adjustmentsDetails = DB::table('counsil_adjustment_group_a')
+                    ->where('id', $val->adjustment_id) // assuming this column exists
+                    ->get();
+
+                // Attach the details directly, no need to json_encode manually
+                $adjustments[$key]->adjustmentsDetails = $adjustmentsDetails;
+            }
+
+            
+
+
+
          return response()->json([
             'success' => true,
             'property' => $property,
             'data'=>$data,
+            'allAssesments'=>$allAssesments,
+            'allAdjustments'=>@$adjustments
         ]);
-    } catch (\Throwable $e) {
-        return response()->json([
-            'success' => false,
-            'error' => $e->getMessage()
-        ], 500);
-    }
+    // } catch (\Throwable $e) {
+    //     return response()->json([
+    //         'success' => false,
+    //         'error' => $e->getMessage()
+    //     ], 500);
+    // }
 
 }
 

@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Activitylog\Traits\LogsActivity;
+// use Spatie\Activitylog\Traits\LogsActivity;
 
 class PropertySanitationType extends Model
 {
-    use LogsActivity;
+    // use LogsActivity;
     protected $fillable = [
         'label', 'value',
     ];

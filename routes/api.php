@@ -20,6 +20,7 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     // app 
     Route::post('/property/save',[PropertyControllerApp::class,'propertySave']);
     Route::post('/property-assessment/save/yearly',[PropertyAssesmentInsertYearly::class,'propertyAssessmentSaveYearly']);
+    Route::post('/property-assessment/update',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']);
 
 });
 

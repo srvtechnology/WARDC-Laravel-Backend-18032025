@@ -64,9 +64,14 @@ ini_set('memory_limit','512M');
 class PropertyAssesmentInsertYearly extends Controller
 {
 
+  
+
+
+
    public function propertyAssessmentSaveYearly(Request $request){
 
     	$currentYear = Carbon::now()->year;
+    	$propertyId=$request->propertyId;
 
 	    // Check if data for this property and year already exists
 	    $exists = PropertyAssessmentDetail::where('property_id', $propertyId)
@@ -83,7 +88,7 @@ class PropertyAssesmentInsertYearly extends Controller
 	    if (!$find) {
 	        return response()->json(['message' => 'No existing data found to clone.'], 404);
 	    }
-	    
+
 		    $ins = new PropertyAssessmentDetail();
 
 		    // Manually assigning all fields (except id)
@@ -141,15 +146,109 @@ class PropertyAssesmentInsertYearly extends Controller
 		    $ins->is_rejected_pensioner = $find->is_rejected_pensioner;
 		    $ins->is_rejected_disability = $find->is_rejected_disability;
 		    $ins->council_group_name = $find->council_group_name;
-		    $ins->arrear_calc = $find->arrear_calc;
+
+		    $lastYearDue=$find->due!=null? $find->due: $find->property_rate_without_gst;
+		    $ins->arrear_calc = $lastYearDue;
+		    $ins->penalty =  round($lastYearDue * 0.25, 2);
+		    $ins->due = round(max(0, $lastYearDue + round($lastYearDue * 0.25, 2)  - 0), 2); // as amount paid in 1 day will be 0
 		    $ins->text_val = $find->text_val;
 
 		    $ins->save();
 
-		    return 'Row cloned successfully with ID: ' . $ins->id;
+		    return 'Row cloned successfully For Property id : ' .  $find->property_id;
 
 
    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public function propertyAssessmentUpdate(Request $request){
+
+
+     $propertyId=$request->propertyId;
+
+   	// Step 1: Get all assessment rows for this property
+		$assessments = PropertyAssessmentDetail::where('property_id', $propertyId)
+		    ->orderBy('created_at', 'asc')
+		    ->get();
+
+  // Step 1: Get first and last year from assessments
+		$firstYear = Carbon::parse($assessments->first()->created_at)->year;
+		$lastYear = Carbon::parse($assessments->last()->created_at)->year;
+
+		// Step 2: Get payments grouped by year
+		$rawPayments = PropertyPayment::where('property_id', $propertyId)
+		    ->selectRaw('YEAR(created_at) as year, SUM(total) as total')
+		    ->groupBy('year')
+		    ->pluck('total', 'year')
+		    ->toArray();
+
+		// Step 3: Fill missing years with 0
+		$paymentsByYear = [];
+		for ($y = $firstYear; $y <= $lastYear; $y++) {
+		    $paymentsByYear[$y] = isset($rawPayments[$y]) ? (float)$rawPayments[$y] : 0;
+		}
+
+		// dd($firstYear,$lastYear,$paymentsByYear);
+
+	// Step 3: Initialize variables
+	$previousDue = null;
+
+	foreach ($assessments as $index => $row) {
+	    $year = Carbon::parse($row->created_at)->format('Y');
+
+	    // Get property rate
+	    $rate = (float)$row->property_rate_without_gst;
+
+	    // Get amount paid for this year (0 if not found)
+	    $amountPaid = isset($paymentsByYear[$year]) ? (float)$paymentsByYear[$year] : 0;
+
+	    if ($index === 0) {
+	        // First year
+	        $arrears = 0;
+	        $penalty = 0;
+	        $due = round($rate - $amountPaid, 2);
+	    } else {
+	        // From second year onward
+	        $arrears = $previousDue;
+	        $penalty = round($arrears * 0.25, 2); // 0.25%
+	        $due = round($arrears + $penalty - $amountPaid, 2);
+	    }
+
+	    // Set calculated values
+	    $row->arrear_calc = $index === 0 ? 0 : $arrears;
+	    $row->penalty = $index === 0 ? 0 : $penalty;
+	    $row->due = $due;
+
+	    // Save the row
+	    $row->save();
+
+	    // Update $previousDue for next loop
+	    $previousDue = $due;
+	}
+
+
+   }
+
+
+
+
+
+
+
+
 
 
 

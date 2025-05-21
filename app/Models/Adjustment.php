@@ -12,7 +12,7 @@ class Adjustment extends Model
         'name'
     ];
 
-    protected $table = 'adjustments';
+    protected $table = 'counsil_adjustment_group_a';
 
     // protected static $logAttributes = ['*'];
     // protected static $logOnlyDirty = true;

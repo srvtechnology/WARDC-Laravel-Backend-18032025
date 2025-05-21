@@ -404,6 +404,10 @@ class PropertyControllerApp extends Controller
 			    $assessmentModel->assessment_images_2 = $request->file('assessment_images_2')->store(Property::ASSESSMENT_IMAGE);
 			}
 
+			$assessmentModel->due      = $request->assessmentRateWithoutGST > 0 ? $request->assessmentRateWithoutGST : $rate['rateWithoutGST'];
+			$assessmentModel->arrear_calc=0;
+			$assessmentModel->penalty=0;
+
 
 
 

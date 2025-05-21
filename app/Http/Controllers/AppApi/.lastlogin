@@ -1,1 +1,77 @@
 34.203.59.163 # 2025-03-17 08:43:26 -0400
+
+
+<?
+
+$allAssesmentDatas=PropertyAssessmentDetail::where('property_id', $propertyId)->pluck('id')->toArray();
+
+
+
+
+$find = PropertyAssessmentDetail::where('property_id', $propertyId)->first();
+     
+if($find->due==null){
+    //first time array will be 0, penalty 0 , due == property_rate_without_gst
+    
+
+
+    //from 2nd time
+    // insert or update
+    //for update, array will be last year due, penalty will be last year due ka 0.25% and amount paid need to fetch from db property_paimanet table group by that year
+    
+}
+
+
+
+
+
+
+use App\Models\PropertyAssessmentDetail;
+use App\Models\PropertyPayment;
+use Carbon\Carbon;
+
+// Step 1: Get all assessment rows for this property
+$assessments = PropertyAssessmentDetail::where('property_id', $propertyId)
+    ->orderBy('created_at', 'asc')
+    ->get();
+
+// Step 2: Get payments grouped by year
+$paymentsByYear = PropertyPayment::where('property_id', $propertyId)
+    ->selectRaw('YEAR(created_at) as year, SUM(total_amount) as total')
+    ->groupBy('year')
+    ->pluck('total', 'year')
+    ->toArray();
+
+// Step 3: Initialize variables
+$previousDue = null;
+
+foreach ($assessments as $index => $row) {
+    $year = Carbon::parse($row->created_at)->format('Y');
+
+    // Get property rate
+    $rate = (float)$row->property_rate_without_gst;
+
+    if ($index === 0) {
+        // First year
+        $arrears = 0;
+        $penalty = 0;
+        $due = $rate;
+    } else {
+        // From second year onward
+        $arrears = $previousDue;
+        $penalty = round($arrears * 0.0025, 2); // 0.25%
+        $amountPaid = isset($paymentsByYear[$year]) ? (float)$paymentsByYear[$year] : 0;
+        $due = round(max(0, $arrears + $penalty - $amountPaid), 2);
+    }
+
+    // Set calculated values
+    $row->arrears = $index === 0 ? 0 : $arrears;
+    $row->penalty = $index === 0 ? 0 : $penalty;
+    $row->due = $due;
+
+    // Save the row
+    $row->save();
+
+    // Update $previousDue for next loop
+    $previousDue = $due;
+}

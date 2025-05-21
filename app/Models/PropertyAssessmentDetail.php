@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Folklore\Image\Facades\Image;
+// use Folklore\Image\Facades\Image;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 // use Spatie\Activitylog\Traits\LogsActivity;
@@ -123,7 +123,7 @@ class PropertyAssessmentDetail extends Model
 
     public function getDemandNoteRecipientPhotoUrlAttribute()
     {
-        return $this->attributes['demand_note_recipient_photo'] ? url(Image::url($this->attributes['demand_note_recipient_photo'], 500, 500)) : null;
+        return $this->attributes['demand_note_recipient_photo'] ? url($this->attributes['demand_note_recipient_photo']) : null;
     }
 
 
@@ -187,6 +187,10 @@ class PropertyAssessmentDetail extends Model
     {
         return $this->belongsTo(PropertyCategory::class, 'property_categories_id');
     }
+     public function propertyCategoryDetails()
+    {
+        return $this->belongsTo(PropertyCategory::class, 'property_categories');
+    }
 
     public function dimension()
     {
@@ -232,7 +236,7 @@ class PropertyAssessmentDetail extends Model
 
     public function getOriginalOneAttribute()
     {
-        return $this->hasImageOne() ? url(Image::url($this->assessment_images_1)) : null;
+        return $this->hasImageOne() ? url($this->assessment_images_1) : null;
     }
 
     public function getSmallPreviewOneAttribute()
@@ -257,19 +261,19 @@ class PropertyAssessmentDetail extends Model
 
     public function getImageOneUrl($width = 100, $height = 100)
     {
-        return $this->hasImageOne() ? url(Image::url($this->assessment_images_1, $width, $height, ['crop'])) : '';
+        return $this->hasImageOne() ? url($this->assessment_images_1) : '';
     }
 
     public function getAdminImageOneUrl($width = 100, $height = 100)
     {
-        return $this->hasImageOne() ? url(Image::url($this->assessment_images_1, $width, $height, ['crop'])) : asset('/images/No_Image_Available.jpg');
+        return $this->hasImageOne() ? url($this->assessment_images_1) : asset('/images/No_Image_Available.jpg');
     }
 
     //assessment_image_2
 
     public function getOriginalTwoAttribute()
     {
-        return $this->hasImageTwo() ? url(Image::url($this->assessment_images_2)) : null;
+        return $this->hasImageTwo() ? url($this->assessment_images_2) : null;
     }
 
     public function getSmallPreviewTwoAttribute()
@@ -294,28 +298,28 @@ class PropertyAssessmentDetail extends Model
 
     public function getRecipientPhoto($width = 100, $height = 100, $options = ['crop'])
     {
-        return Storage::has($this->demand_note_recipient_photo) ? url(Image::url($this->demand_note_recipient_photo, $width, $height, $options)) : asset('images/person-placer.png');
+        return Storage::has($this->demand_note_recipient_photo) ? url($this->demand_note_recipient_photo, $width, $height, $options) : asset('images/person-placer.png');
     }
 
     public function getImageTwoUrl($width = 100, $height = 100)
     {
-        return $this->hasImageTwo() ? url(Image::url($this->assessment_images_2, $width, $height, ['crop'])) : '';
+        return $this->hasImageTwo() ? url($this->assessment_images_2) : '';
     }
 
     public function getImageAnyUrl($width = 100, $height = 100, $resize = false)
     {
         if($this->hasImageOne()){
-            return url(Image::url($this->assessment_images_1, $width, $height, $resize ? [] : ['crop']));
+            return url($this->assessment_images_1);
         }elseif($this->hasImageTwo()){
-            return url(Image::url($this->assessment_images_2, $width, $height, $resize ? [] : ['crop']));
+            return url($this->assessment_images_2);
         }else{
-            return url(Image::url("District/council_logo.jpg", $width, $height, ['crop']));
+            return url("District/council_logo.jpg");
         }
     }
 
     public function getAdminImageTwoUrl($width = 100, $height = 100)
     {
-        return $this->hasImageTwo() ? url(Image::url($this->assessment_images_2, $width, $height, ['crop'])) : asset('/images/No_Image_Available.jpg');
+        return $this->hasImageTwo() ? url($this->assessment_images_2) : asset('/images/No_Image_Available.jpg');
     }
 
     public function getCurrentYearAssessmentAmount()
