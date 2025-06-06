@@ -24,6 +24,7 @@ use App\Models\PropertyGeoRegistry;
 use App\Models\PropertyInaccessible;
 use App\Models\PropertyRoofsMaterials;
 use App\Models\PropertyType;
+use App\Models\Property_property_inaccessibles;
 use App\Models\PropertyUse;
 use App\Models\PropertyPayment;
 use App\Models\PropertyValueAdded;
@@ -56,6 +57,8 @@ use App\Models\PropertyToCounsilGroupA;
 use App\UserAssignedProperty;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use App\Models\OccupancyDetail;
+use App\Models\Property_occupancies;
 
 ini_set('memory_limit','512M');
 
@@ -729,7 +732,8 @@ public function propertyDetails(Request $request){
                 'payments',
                 'payments.admin',
                 'landlord',
-                'propertyInaccessible'
+                'propertyInaccessible',
+                'registryMeters'
             ])->where('id',$request->property_id)->first();
 
         $data=[];
@@ -774,7 +778,7 @@ public function propertyDetails(Request $request){
         $data['selected_occupancies'] = $property->occupancies->pluck('occupancy_type')->toArray();
 
         $data['property_inaccessable'] = PropertyInaccessible::where('is_active', 1)->pluck('label', 'id')->toArray();
-        $data['selected_property_inaccessable'] = $property->propertyInaccessible()->pluck('id')->toArray();
+        // $data['selected_property_inaccessable'] = $property->propertyInaccessible()->pluck('id')->toArray();
         $data['swimmings'] = Swimming::where('is_active', 1)->pluck('label', 'id')->prepend('Select', '')->toArray();
         
         $data['ab_2020_data']=PropertyAssessmentDetail::where('created_at', '>', '2019-12-12')->where('property_id',$request->property)->first();
@@ -829,6 +833,360 @@ public function propertyDetails(Request $request){
     // }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public function updateLandlord(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'property_id' => 'required|integer',
+        'landlord_id' => 'required|integer',
+        'is_organization' => 'required',
+
+        // Organization fields
+        'organization_name' => 'nullable|string|max:255',
+        'organization_type' => 'nullable|string|max:255',
+        'organization_tin' => 'nullable|string|max:255',
+        'organization_addresss' => 'nullable|string|max:255',
+
+        // Personal fields
+        'first_name' => 'required_if:is_organization,false|nullable|string|max:255',
+        'middle_name' => 'nullable|string|max:255',
+        'surname' => 'required_if:is_organization,false|nullable|string|max:255',
+        'sex' => 'required_if:is_organization,false|nullable|string|max:255',
+
+        // Common fields
+        'street_number' => 'required|string',
+        'street_name' => 'nullable|string|max:255',
+        'email' => 'nullable|email',
+        'tin' => 'nullable|string|max:255',
+        'id_type' => 'nullable|string|max:255',
+        'id_number' => 'nullable|string|max:255',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+
+        'ward' => 'required|string',
+        'constituency' => 'required|string',
+        'section' => 'required|string|max:255',
+        'chiefdom' => 'required|string|max:255',
+        'district' => 'required|string|max:255',
+        'province' => 'required|string|max:255',
+        'postcode' => 'required|string|max:255',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'errors' => $validator->errors(),
+            'message' => 'Validation failed'
+        ], 422);
+    }
+
+    // Convert is_organization to boolean
+    $isOrganization = filter_var($request->is_organization, FILTER_VALIDATE_BOOLEAN);
+
+    try {
+        $property = Property::find($request->property_id);
+        if (!$property) {
+            return response()->json(['status' => false, 'message' => 'Property not found'], 404);
+        }
+
+        $landlord = LandlordDetail::find($request->landlord_id);
+        if (!$landlord) {
+            return response()->json(['status' => false, 'message' => 'Landlord not found'], 404);
+        }
+
+        // ---------------------
+        // Update Property Data
+        // ---------------------
+        $property->is_organization = $isOrganization;
+
+        if ($isOrganization) {
+            $property->organization_name = $request->organization_name;
+            $property->organization_type = $request->organization_type;
+            $property->organization_tin = $request->organization_tin;
+            $property->organization_addresss = $request->organization_addresss;
+        } else {
+            // Clear organization fields
+            $property->organization_name = null;
+            $property->organization_type = null;
+            $property->organization_tin = null;
+            $property->organization_addresss = null;
+        }
+
+        $property->save();
+
+        // ----------------------
+        // Update Landlord Data
+        // ----------------------
+        $landlordData = [
+            'street_number' => $request->street_number,
+            'street_name' => $request->street_name,
+            'email' => $request->email,
+            'tin' => $request->tin,
+            'id_type' => $request->id_type,
+            'id_number' => $request->id_number,
+            'ward' => $request->ward,
+            'constituency' => $request->constituency,
+            'section' => $request->section,
+            'chiefdom' => $request->chiefdom,
+            'district' => $request->district,
+            'province' => $request->province,
+            'postcode' => $request->postcode,
+        ];
+
+        if (!$isOrganization) {
+            $landlordData['first_name'] = $request->first_name;
+            $landlordData['middle_name'] = $request->middle_name;
+            $landlordData['surname'] = $request->surname;
+            $landlordData['sex'] = $request->sex;
+        }
+
+       
+
+        $landlord->update($landlordData);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Landlord details updated successfully',
+            'data' => [
+                'property' => $property,
+                'landlord' => $landlord
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'An error occurred',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+public function updateProperty(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'property_id' => 'required|integer',
+      
+
+        'ward' => 'required|string',
+        'constituency' => 'required|string',
+        'section' => 'required|string|max:255',
+        'chiefdom' => 'required|string|max:255',
+        'district' => 'required|string|max:255',
+        'province' => 'required|string|max:255',
+        'postcode' => 'required|string|max:255',
+        
+        'is_draft_delivered' => 'required',
+        'delivered_name' => 'required',
+        'delivered_number' => 'required',
+        'delivered_image' => 'required',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'errors' => $validator->errors(),
+            'message' => 'Validation failed'
+        ], 422);
+    }
+
+    // Convert is_organization to boolean
+    $isOrganization = filter_var($request->is_organization, FILTER_VALIDATE_BOOLEAN);
+
+    try {
+        $property = Property::find($request->property_id);
+        if (!$property) {
+            return response()->json(['status' => false, 'message' => 'Property not found'], 404);
+        }
+
+        $propertyInaccessible= array_map('intval', explode(',', $request->property_inaccessable));
+
+      
+
+        // ---------------------
+        // Update Property Data
+        // ---------------------
+             $property->street_number = $request->street_number;
+              $property->street_name = $request->street_name;
+            $property->ward = $request->ward;
+            $property->constituency = $request->constituency;
+            $property->section = $request->section;
+            $property->chiefdom = $request->chiefdom;
+
+            $property->district = $request->district;
+            $property->province = $request->province;
+            $property->postcode = $request->postcode;
+            $property->chiefdom = $request->chiefdom;
+
+            $property->is_property_inaccessible = ($propertyInaccessible && count($propertyInaccessible)) ? true : false;
+            $property->is_draft_delivered = $request->is_draft_delivered;
+            $property->delivered_name = $request->delivered_name;
+            $property->delivered_number = $request->delivered_number;
+
+             if ($request->hasFile('delivered_image')) {
+                $file = $request->file('delivered_image');
+
+                // Define a unique name with directory structure
+                $filePath = 'property/delivered/image';
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension(); // e.g., 7Y83SbHt7r.jpg
+
+                // Store the file under storage/app/public/property/delivered/image
+                $path = $file->storeAs($filePath, $fileName, 'public');
+
+                // Optionally: save the path to DB
+                $property->delivered_image = $path;
+            
+            }
+
+
+            $property->save();
+
+             // $property->propertyInaccessible()->sync($propertyInaccessible);
+             //store to Property_property_inaccessibles model first delete and then insert
+
+            $dltall=Property_property_inaccessibles::where('property_id',$request->property_id)->delete();
+
+            foreach($propertyInaccessible as $val){
+
+                $insInacc=new Property_property_inaccessibles;
+                $insInacc->property_id=$request->property_id;
+                $insInacc->property_inaccessible_id=$val;
+                $insInacc->save();
+            }
+
+
+      
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Property details updated successfully',
+            
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'An error occurred',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// updateOccupency
+
+public function updateOccupency(Request $request)
+{
+    // return response()->json(['data' => $request->occupancy_type, 'message' => 'Property not found']);
+    $validator = Validator::make($request->all(), [
+        "occupancy_id" => "required",
+        "property_id" => "required",
+        'occupancy_type' => 'nullable|array',
+        'occupancy_type.*' => 'nullable|in:Owned Tenancy,Rented House,Unoccupied House',
+        "tenant_first_name" => "nullable|string|max:50",
+        "middle_name" => "nullable|string|max:40",
+        "surname" => "nullable|string|max:30",
+        "mobile_1" => "nullable|string|max:15",
+        "mobile_2" => "nullable|string|max:15"
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => 'error',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    $data = $request->all();
+
+    try {
+        $property = Property::find($request->property_id);
+        if (!$property) {
+            return response()->json(['status' => false, 'message' => 'Property not found'], 404);
+        }
+
+        $occupancy =OccupancyDetail::find($request->occupancy_id);
+        if (!$occupancy) {
+            return response()->json(['status' => false, 'message' => 'Property not found'], 404);
+        }
+
+        $occupancy->tenant_first_name=$request->tenant_first_name;
+        $occupancy->middle_name=$request->middle_name;
+        $occupancy->surname=$request->surname;
+        $occupancy->mobile_1=$request->mobile_1;
+        $occupancy->mobile_2=$request->mobile_2;
+        $occupancy->save();
+
+        // Sync occupancy types
+        //delete and then insert
+        $dltall=Property_occupancies::where('property_id',$request->property_id)->delete();
+
+            foreach($request->occupancy_type as $val){
+
+                $insOcc=new Property_occupancies;
+                $insOcc->property_id=$request->property_id;
+                $insOcc->occupancy_type=$val;
+                $insOcc->save();
+            }
+
+        
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Occupancy details updated successfully.',
+            'data' => $occupancy
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+             'status' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+
 
 
 

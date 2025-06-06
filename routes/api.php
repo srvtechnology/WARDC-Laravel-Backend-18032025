@@ -11,13 +11,38 @@ use App\Http\Controllers\AppApi\PropertyAssesmentInsertYearly;
 Route::post('login',[AuthController::class,'login']);
 
 Route::middleware([CheckSanctumToken::class])->group(function () {
+
+    // =================== WEB =====================//
     Route::post('/admin/logout', [AuthController::class, 'logout']);
     Route::post('/admin/profile', [AuthController::class, 'profile']);
 
+
+   // property list and details
     Route::any('/admin/property-listing',[PropertyController::class,'index']);
     Route::post('/property/details',[PropertyController::class,'propertyDetails']);
 
-    // app 
+    // landloard edit
+     Route::post('/landloard/update',[PropertyController::class,'updateLandlord']);
+
+    // edit property
+    Route::post('/property/update',[PropertyController::class,'updateProperty']);
+
+    // edit occupency
+    Route::post('/occupency/update',[PropertyController::class,'updateOccupency']);
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //===================== APP ====================// 
     Route::post('/property/save',[PropertyControllerApp::class,'propertySave']);
     Route::post('/property-assessment/save/yearly',[PropertyAssesmentInsertYearly::class,'propertyAssessmentSaveYearly']);
     Route::post('/property-assessment/update',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']);
