@@ -771,144 +771,348 @@ class PropertyControllerApp extends Controller
     
 
 
-    public function calculateNewRate($request){
-    	$result = [
-		    'rateWithoutGST' => 0,
-		    'GST' => 0,
-		    'rateWithGST' => 0,
-		    'percent_of_adjustments' => 0
-		];
+  //   public function calculateNewRate($request){
+  //   	$result = [
+		//     'rateWithoutGST' => 0,
+		//     'GST' => 0,
+		//     'rateWithGST' => 0,
+		//     'percent_of_adjustments' => 0
+		// ];
 
-		// Initialize default values
-		$defaultValues = [
-		    'property_category' => 0,
-		    'rate_square_meter' => 2750.00,
-		    'wall_material' => 0,
-		    'window_val' => 0,
-		    'roof_material' => 0,
-		    'value_added_val' => 0,
-		    'property_type_val' => 0,
-		    'property_dimension' => 0,
-		    'property_use' => 0,
-		    'zones' => 0,
-		    'no_of_shops' => $request->total_shops ?: 0,
-		    'no_of_mast' => $request->total_mast ?: 0,
-		    'shopValue' => 0,
-		    'mastValue' => 0,
-		];
-		extract($defaultValues);
+		// // Initialize default values
+		// $defaultValues = [
+		//     'property_category' => 0,
+		//     'rate_square_meter' => 2750.00,
+		//     'wall_material' => 0,
+		//     'window_val' => 0,
+		//     'roof_material' => 0,
+		//     'value_added_val' => 0,
+		//     'property_type_val' => 0,
+		//     'property_dimension' => 0,
+		//     'property_use' => 0,
+		//     'zones' => 0,
+		//     'no_of_shops' => $request->total_shops ?: 0,
+		//     'no_of_mast' => $request->total_mast ?: 0,
+		//     'shopValue' => 0,
+		//     'mastValue' => 0,
+		// ];
+		// extract($defaultValues);
 
-		// Handle special value-added items (shops and masts)
-		$specialValueAddedIds = [8, 9];
-		$valueAdded = [];
+		// // Handle special value-added items (shops and masts)
+		// $specialValueAddedIds = [8, 9];
+		// $valueAdded = [];
 
-		if (isset($request->assessment_value_added_id) && is_array($request->assessment_value_added_id)) {
-		    foreach ($specialValueAddedIds as $value) {
-		        if (in_array($value, $request->assessment_value_added_id)) {
-		            $amount = PropertyValueAdded::where('id', $value)->value('value');
-		            ${$value == 9 ? 'shopValue' : 'mastValue'} = $amount;
-		        }
-		    }
-		    $valueAdded = array_diff($request->assessment_value_added_id, $specialValueAddedIds);
-		}
+		// if (isset($request->assessment_value_added_id) && is_array($request->assessment_value_added_id)) {
+		//     foreach ($specialValueAddedIds as $value) {
+		//         if (in_array($value, $request->assessment_value_added_id)) {
+		//             $amount = PropertyValueAdded::where('id', $value)->value('value');
+		//             ${$value == 9 ? 'shopValue' : 'mastValue'} = $amount;
+		//         }
+		//     }
+		//     $valueAdded = array_diff($request->assessment_value_added_id, $specialValueAddedIds);
+		// }
 
-		// Fetch property characteristics
-		$window_val = optional(PropertyWindowType::find($request->assessment_window_type_id))->value;
-		$wall_material = optional(PropertyWallMaterials::find($request->assessment_wall_materials_id))->value;
-		$roof_material = optional(PropertyRoofsMaterials::find($request->assessment_roofs_materials_id))->value;
-		$property_use = optional(PropertyUse::find($request->assessment_use_id))->value;
-		$zones = optional(PropertyZones::find($request->assessment_zone_id))->value;
+		// // Fetch property characteristics
+		// $window_val = optional(PropertyWindowType::find($request->assessment_window_type_id))->value;
+		// $wall_material = optional(PropertyWallMaterials::find($request->assessment_wall_materials_id))->value;
+		// $roof_material = optional(PropertyRoofsMaterials::find($request->assessment_roofs_materials_id))->value;
+		// $property_use = optional(PropertyUse::find($request->assessment_use_id))->value;
+		// $zones = optional(PropertyZones::find($request->assessment_zone_id))->value;
 
-		// Calculate property dimension based on either length*breadth or direct area
-		if (isset($request->assessment_length) && isset($request->assessment_breadth)) {
-		    $property_dimension = ($request->assessment_length * $request->assessment_breadth) * $rate_square_meter;
-		} elseif (isset($request->assessment_area)) {
-		    $property_dimension = $request->assessment_area * $rate_square_meter;
-		}
+		// // Calculate property dimension based on either length*breadth or direct area
+		// if (isset($request->assessment_length) && isset($request->assessment_breadth)) {
+		//     $property_dimension = ($request->assessment_length * $request->assessment_breadth) * $rate_square_meter;
+		// } elseif (isset($request->assessment_area)) {
+		//     $property_dimension = $request->assessment_area * $rate_square_meter;
+		// }
 
-		// Calculate value added components
-		$value_added_val = PropertyValueAdded::whereIn('id', $valueAdded)->sum('value');
-		$property_type_val = PropertyType::whereIn('id', $request->assessment_types ?? [])->sum('value');
+		// // Calculate value added components
+		// $value_added_val = PropertyValueAdded::whereIn('id', $valueAdded)->sum('value');
+		// $property_type_val = PropertyType::whereIn('id', $request->assessment_types ?? [])->sum('value');
 
-		// Add shop and mast values if they exist
-		if ($shopValue > 0) {
-		    $value_added_val += ($shopValue * $no_of_shops);
-		}
-		if ($mastValue > 0) {
-		    $value_added_val += ($mastValue * $no_of_mast);
-		}
+		// // Add shop and mast values if they exist
+		// if ($shopValue > 0) {
+		//     $value_added_val += ($shopValue * $no_of_shops);
+		// }
+		// if ($mastValue > 0) {
+		//     $value_added_val += ($mastValue * $no_of_mast);
+		// }
 
-		// Get property categories if they exist
-		$property_categories = PropertyCategory::whereIn('id', $request->assessment_categories_id ?? [])->get();
+		// // Get property categories if they exist
+		// $property_categories = PropertyCategory::whereIn('id', $request->assessment_categories_id ?? [])->get();
 
-		// Calculate the steps for final assessment
-		$swimming_pool = optional(Swimming::find($request->swimming_pool))->value;
-		$step1 = $wall_material + $roof_material + $value_added_val + $window_val + ($swimming_pool ?: 0);
-		$step2 = $property_use;
-		$step3 = $zones;
-		$step4 = $property_type_val;
-		$step0 = $property_dimension;
+		// // Calculate the steps for final assessment
+		// $swimming_pool = optional(Swimming::find($request->swimming_pool))->value;
+		// $step1 = $wall_material + $roof_material + $value_added_val + $window_val + ($swimming_pool ?: 0);
+		// $step2 = $property_use;
+		// $step3 = $zones;
+		// $step4 = $property_type_val;
+		// $step0 = $property_dimension;
 
-		// Calculate gated community factor
-		$gated_community = $request->gated_community ? getSystemConfig(SystemConfig::OPTION_GATED_COMMUNITY) : 1;
+		// // Calculate gated community factor
+		// $gated_community = $request->gated_community ? getSystemConfig(SystemConfig::OPTION_GATED_COMMUNITY) : 1;
 
-		// Calculate category multiplier
-		$step6 = 1;
-		if ($property_categories->isNotEmpty()) {
-		    $step6 = $property_categories->reduce(fn($carry, $item) => $carry * $item->value, 1);
-		}
+		// // Calculate category multiplier
+		// $step6 = 1;
+		// if ($property_categories->isNotEmpty()) {
+		//     $step6 = $property_categories->reduce(fn($carry, $item) => $carry * $item->value, 1);
+		// }
 
-		// Calculate base rate without GST
-		$result['rateWithoutGST'] = (($step0 + ($step1 * $step2 * $step3 * $step4)) * $gated_community + ($swimming_pool ?: 0)) * $step6;
+		// // Calculate base rate without GST
+		// $result['rateWithoutGST'] = (($step0 + ($step1 * $step2 * $step3 * $step4)) * $gated_community + ($swimming_pool ?: 0)) * $step6;
 
-		// Apply property characteristic percentages if they exist
-		$percentages = [
-		    'wallPer' => $request->wallPer ?: 0,
-		    'roofPer' => $request->roofPer ?: 0,
-		    'valuePer' => $request->valuePer ?: 0,
-		    'windowPer' => $request->windowPer ?: 0
-		];
+		// // Apply property characteristic percentages if they exist
+		// $percentages = [
+		//     'wallPer' => $request->wallPer ?: 0,
+		//     'roofPer' => $request->roofPer ?: 0,
+		//     'valuePer' => $request->valuePer ?: 0,
+		//     'windowPer' => $request->windowPer ?: 0
+		// ];
 
-		$totalPercentage = array_sum($percentages);
-		if ($totalPercentage) {
-		    $result['rateWithoutGST'] += $result['rateWithoutGST'] * ($totalPercentage / 100);
-		}
+		// $totalPercentage = array_sum($percentages);
+		// if ($totalPercentage) {
+		//     $result['rateWithoutGST'] += $result['rateWithoutGST'] * ($totalPercentage / 100);
+		// }
 
-		// Calculate adjustment percentages
-		$sumOfPercentage = 0;
-		if ($request->newAdjustmentIds) {
-		    $adjustments = json_decode($request->newAdjustmentIds);
-		    foreach ($adjustments as $val) {
-		        if (!isset($val->amount) && !isset($val->value)) {
-		            $sumOfPercentage += ($val->sign == "+" ? (int)$val->percentage : -(int)$val->percentage);
-		        }
-		    }
-		}
+		// // Calculate adjustment percentages
+		// $sumOfPercentage = 0;
+		// if ($request->newAdjustmentIds) {
+		//     $adjustments = json_decode($request->newAdjustmentIds);
+		//     foreach ($adjustments as $val) {
+		//         if (!isset($val->amount) && !isset($val->value)) {
+		//             $sumOfPercentage += ($val->sign == "+" ? (int)$val->percentage : -(int)$val->percentage);
+		//         }
+		//     }
+		// }
 
-		$result['percent_of_adjustments'] = $sumOfPercentage;
+		// $result['percent_of_adjustments'] = $sumOfPercentage;
 
-		// Apply adjustment percentages if they exist
-		if ($request->newAdjustmentIds && count(json_decode($request->newAdjustmentIds)) > 0) {
-		    $result['rateWithoutGST'] *= (100 + $sumOfPercentage) / 100;
-		}
+		// // Apply adjustment percentages if they exist
+		// if ($request->newAdjustmentIds && count(json_decode($request->newAdjustmentIds)) > 0) {
+		//     $result['rateWithoutGST'] *= (100 + $sumOfPercentage) / 100;
+		// }
 
-		// Calculate final values with GST
-		$result['GST'] = $result['rateWithoutGST'] * 0.15;
-		$result['rateWithGST'] = round($result['rateWithoutGST'] + $result['GST'], 4);
-		$result['rateWithoutGST'] = $result['rateWithoutGST'] / 1000;
+		// // Calculate final values with GST
+		// $result['GST'] = $result['rateWithoutGST'] * 0.15;
+		// $result['rateWithGST'] = round($result['rateWithoutGST'] + $result['GST'], 4);
+		// $result['rateWithoutGST'] = $result['rateWithoutGST'] / 1000;
 
-		return $result;
+		// return $result;
+  //   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  public function calculateNewRate($request)
+    {
+        $property_category = 0;
+        $rate_square_meter = 2750.00;
+        $wall_material = 0;
+        $window_val = 0;
+        $roof_material = 0;
+        $value_added_val = 0;
+        $property_type_val = 0;
+        $property_dimension = 0;
+        $property_use = 0;
+        $zones = 0;
+        $no_of_shops = $request->total_shops ? $request->total_shops : 0;
+        $no_of_mast = $request->total_mast ? $request->total_mast : 0;
+        $shopValue = 0;
+        $mastValue = 0;
+        $valueAdded = [8, 9];
+        $property_categories = [];
+
+        if (isset($request->assessment_value_added_id) && is_array($request->assessment_value_added_id)) {
+            foreach ($valueAdded as $value) {
+                if (in_array($value, $request->assessment_value_added_id)) {
+                    $amount = PropertyValueAdded::select('value')->where('id', $value)->first();
+                    if ($value == 9) {
+                        $shopValue = $amount->value;
+                    }
+                    if ($value == 8) {
+                        $mastValue = $amount->value;
+                    }
+                }
+            }
+            $valueAdded = array_diff($request->assessment_value_added_id, $valueAdded);
+        }
+        
+        if(isset($request->assessment_window_type_id) and $request->assessment_window_type_id != null){
+            $window_val = PropertyWindowType::select('value')->find($request->assessment_window_type_id);
+        }
+        if (isset($request->assessment_categories_id) and $request->assessment_categories_id != null)
+            $property_categories = PropertyCategory::whereIn('id', $request->assessment_categories_id)->get();
+
+        if (isset($request->assessment_wall_materials_id) and $request->assessment_wall_materials_id != null)
+            $wall_material = PropertyWallMaterials::select('value')->find($request->assessment_wall_materials_id);
+
+        if (isset($request->assessment_roofs_materials_id) and $request->assessment_roofs_materials_id != null)
+            $roof_material = PropertyRoofsMaterials::select('value')->find($request->assessment_roofs_materials_id);
+
+        if (is_array($request->assessment_value_added_id) and count($request->assessment_value_added_id) > 0)
+            $value_added_val = PropertyValueAdded::whereIn('id', $valueAdded)->sum('value');
+
+        if (is_array($request->assessment_types) and count($request->assessment_types) > 0)
+            $property_type_val = PropertyType::whereIn('id', $request->assessment_types)->sum('value');
+
+        // if (isset($request->assessment_dimension_id) and $request->assessment_dimension_id != null)
+        //     $property_dimension = PropertyDimension::select('value')->find($request->assessment_dimension_id);
+        if (isset($request->assessment_length) and $request->assessment_length != null and (isset($request->assessment_breadth) and $request->assessment_breadth != null) ) {
+
+
+
+            if ($request->has('property_district')) {
+                $district = District::where('name', $request->property_district)->first();
+                if ($district->sq_meter_value) {
+                    //$rate_square_meter = $district->sq_meter_value;
+                }
+            }
+
+            $property_dimension = ($request->assessment_length * $request->assessment_breadth) * $rate_square_meter;
+            //$property_dimension = ($request->assessment_area) * $rate_square_meter;
+            //$property_dimension = $request->property_dimension * getSystemConfig(SystemConfig::CURRENT_RATE);
+            //$property_dimension = PropertyDimension::select('value')->find($request->property_dimension);
+        }
+
+        if (isset($request->assessment_area) and $request->assessment_area != null) {
+
+
+
+            if ($request->has('property_district')) {
+                $district = District::where('name', $request->property_district)->first();
+                if ($district->sq_meter_value) {
+                    //$rate_square_meter = $district->sq_meter_value;
+                }
+            }
+
+            //$property_dimension = ($request->assessment_length * $request->assessment_breadth) * $rate_square_meter;
+            $property_dimension = ($request->assessment_area) * $rate_square_meter;
+            //$property_dimension = $request->property_dimension * getSystemConfig(SystemConfig::CURRENT_RATE);
+            //$property_dimension = PropertyDimension::select('value')->find($request->property_dimension);
+        }
+
+
+        if (isset($request->assessment_use_id) and $request->assessment_use_id != null)
+            $property_use = PropertyUse::select('value')->find($request->assessment_use_id);
+
+        if (isset($request->assessment_zone_id) and $request->assessment_zone_id != null)
+            $zones = PropertyZones::select('value')->find($request->assessment_zone_id);
+
+        /*number of Shop available*/
+
+        if ($shopValue > 0)
+            $value_added_val = $value_added_val + ($shopValue * $no_of_shops);
+
+        /*number of mast available*/
+        if ($mastValue > 0)
+            $value_added_val = $value_added_val + ($mastValue * $no_of_mast);
+
+        // $step1 = $wall_material['value'] + $roof_material['value'] + $value_added_val;
+        // $step2 = $property_type_val;
+        // $step3 = $property_dimension['value'];
+        // $step4 = $property_use['value'];
+        // $step5 = $zones['value'];
+        // $step6 = 0;
+        $swimming_pool = optional(Swimming::find($request->swimming_pool))->value;
+        $step1 = optional($wall_material)->value + optional($roof_material)->value + $value_added_val + optional($window_val)->value + ($swimming_pool ? $swimming_pool : 0);
+        $step2 = optional($property_use)->value;
+        $step3 = optional($zones)->value;
+        $step4 = $property_type_val;
+        //$step3 = $property_dimension['value'];
+        $step0 = $property_dimension;
+        $step6 = 0;
+        
+
+        $gated_community = $request->gated_community ? getSystemConfig(SystemConfig::OPTION_GATED_COMMUNITY) : 1;
+
+        if (count($property_categories) && $property_categories->count()) {
+            $step6 = 1;
+
+            foreach ($property_categories as $prop_category) {
+                $step6 *= $prop_category->value;
+            }
+        }
+
+        //$result['rateWithoutGST'] = @(((($step1 * $step2 * $step3 * $step4) * $gated_community) + ($swimming_pool ? $swimming_pool : 0)) / ($step6 > 0 ? $step6 : 1));
+        $result['rateWithoutGST'] = @((($step0 + ($step1 *  $step2 * $step3 * $step4)) * $gated_community)  + ($swimming_pool ? $swimming_pool : 0)) * ($step6 > 0 ? $step6 : 1);
+        $wallMaterialPercentage = ($request->wallPer)? $request->wallPer : 0;
+        $roofMaterialPercentage = ($request->roofPer)? $request->roofPer : 0;
+        $valueAddedPercentage = ($request->valuePer)? $request->valuePer : 0;
+        $windowTypePercentage = ($request->windowPer)? $request->windowPer : 0;
+
+        //Total percentage of property characteristic
+        $totalPercentage = array_sum([$wallMaterialPercentage, $roofMaterialPercentage, $valueAddedPercentage, $windowTypePercentage]);
+
+
+
+
+
+        //If property characteristic exist
+        if($totalPercentage){
+            $result['rateWithoutGST'] = $result['rateWithoutGST'] + ($result['rateWithoutGST'] * ($totalPercentage/100));  
+        }
+
+        //dd($result['rateWithoutGST']);
+
+
+         //----------------//new percentage code
+        $sumOfPercentage=0;
+         if(@$request->newAdjustmentIds){
+             foreach(json_decode(@$request->newAdjustmentIds) as $val ){
+                if(@$val->amount || @$val->value){
+                }else{
+                if($val->sign=="+"){
+                 $sumOfPercentage=$sumOfPercentage+(int)$val->percentage;
+                }else{
+                  $sumOfPercentage=$sumOfPercentage-(int)$val->percentage;
+                }
+               }// end if for amont
+            } // end foreach
+         }
+            
+            $result['percent_of_adjustments'] =$sumOfPercentage;
+            // //its minus or plus check that
+
+        //If value added exist NEW CALCULATION
+        
+        if(@$request->newAdjustmentIds){
+          if(count(json_decode(@$request->newAdjustmentIds))>0){
+            $result['rateWithoutGST'] = $result['rateWithoutGST'] * ((100+($sumOfPercentage))/100); 
+          }
+        }
+
+
+          //------------PREVIOUS CALCULATION --------------//
+        // if(is_array($request->adjustment_ids) && count($request->adjustment_ids)){
+        //     $adjustmentPercentage = AdjustmentValue::where('group_name', $request->group_name)->whereIn('adjustment_id', $request->adjustment_ids)->pluck('percentage')->toArray();
+
+        //     $result['rateWithoutGST'] = $result['rateWithoutGST'] * ((100-array_sum($adjustmentPercentage))/100);            
+        // }
+
+
+        $result['GST'] = $result['rateWithoutGST'] * .15;
+
+        $result['rateWithGST'] = round($result['rateWithoutGST'] + $result['GST'], 4);
+        $result['rateWithoutGST'] = $result['rateWithoutGST'] / 1000;
+
+        return $result;
     }
-
-
-
-
-
-
-
-
-
-
 
 
 

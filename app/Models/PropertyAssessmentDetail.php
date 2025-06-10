@@ -629,5 +629,11 @@ class PropertyAssessmentDetail extends Model
     {
         return $this->getCurrentInstallmentDueAmount();
     }
+
+
+      public function propertyCategoryNew()
+    {
+        return $this->hasMany('App\Models\Property_property_category', 'assessment_id','id');
+    }
 }
 

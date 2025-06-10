@@ -31,6 +31,13 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     Route::post('/occupency/update',[PropertyController::class,'updateOccupency']);
 
 
+    // edit assessment
+   Route::post('/assessment/update',[PropertyController::class,'updateAssessment']);
+
+    // edit updateGeoLocation
+   Route::post('/geolocation/update',[PropertyController::class,'updateGeoLocation']);
+
+
 
 
 

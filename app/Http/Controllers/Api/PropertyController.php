@@ -59,6 +59,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use App\Models\OccupancyDetail;
 use App\Models\Property_occupancies;
+use App\Models\Property_property_category;
+use App\Models\Property_property_type;
+use App\Models\Property_property_value_added;
 
 ini_set('memory_limit','512M');
 
@@ -727,6 +730,7 @@ public function propertyDetails(Request $request){
                     $query->with(['types', 'valuesAdded', 'categories','propertyCategoryDetails'])->latest();
                 },
                 'assessments.payments',
+                'assessments.propertyCategoryNew',
                 // 'assessments.propertyCategoryDetails',
                 'geoRegistry',
                 'payments',
@@ -783,6 +787,9 @@ public function propertyDetails(Request $request){
         
         $data['ab_2020_data']=PropertyAssessmentDetail::where('created_at', '>', '2019-12-12')->where('property_id',$request->property)->first();
 
+        $data['gated_community'] = [1 => 'Yes', 0 => 'No'];
+        $data['all_counsil']=DB::table('counsil_adjustment_group_a')->get();
+
 
        $allAssesments = PropertyAssessmentDetail::where('property_id', $request->property_id)
             ->select('id','created_at','arrear_calc', 'penalty as penalty_amount','due','property_rate_without_gst','property_rate_with_gst','demand_note_recipient_photo')
@@ -833,6 +840,10 @@ public function propertyDetails(Request $request){
     // }
 
 }
+
+
+
+
 
 
 
@@ -990,6 +1001,10 @@ public function updateLandlord(Request $request)
 
 
 
+
+
+
+
 public function updateProperty(Request $request)
 {
     $validator = Validator::make($request->all(), [
@@ -1114,6 +1129,7 @@ public function updateProperty(Request $request)
 
 
 
+
 // updateOccupency
 
 public function updateOccupency(Request $request)
@@ -1148,7 +1164,7 @@ public function updateOccupency(Request $request)
 
         $occupancy =OccupancyDetail::find($request->occupancy_id);
         if (!$occupancy) {
-            return response()->json(['status' => false, 'message' => 'Property not found'], 404);
+            return response()->json(['status' => false, 'message' => 'Occupency not found'], 404);
         }
 
         $occupancy->tenant_first_name=$request->tenant_first_name;
@@ -1185,6 +1201,336 @@ public function updateOccupency(Request $request)
         ], 500);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public function updateAssessment(Request $request)
+{
+    // return response()->json(['data' => $request->occupancy_type, 'message' => 'Property not found']);
+    $validator = Validator::make($request->all(), [
+           "assessment_id" => "required|integer",
+            "property_id" => "required|integer",
+            'property_categories' => 'nullable',
+            'property_categories.*' => 'nullable',
+            // "property_types" => "required|max:2",
+            // "property_types.*" => 'required|exists:property_types,id',
+            "property_types_total" => "nullable|max:2",
+            // "property_types_total.*" => 'nullable',
+            "property_wall_materials" => "required|integer",
+            "roofs_materials" => "required|integer",
+            "property_dimension" => "nullable|integer",
+            "property_value_added.*" => "required",
+            "property_use" => "required|integer",
+            "zone" => "required|integer",
+            'assessment_images_1' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+            'assessment_images_2' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => 'error',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    $data = $request->all();
+
+    // try {
+        $property = Property::find($request->property_id);
+        if (!$property) {
+            return response()->json(['status' => false, 'message' => 'Property not found'], 404);
+        }
+
+        $assessment =PropertyAssessmentDetail::find($request->assessment_id);
+        if (!$assessment) {
+            return response()->json(['status' => false, 'message' => 'Assesment not found'], 404);
+        }
+
+        $assessment->gated_community=$request->gated_community;
+        $assessment->length=$request->length;
+        $assessment->breadth=$request->breadth;
+        $assessment->square_meter=$request->length*$request->breadth;
+        $assessment->roofs_materials=$request->roofs_materials;
+        $assessment->property_wall_materials=$request->property_wall_materials;
+        $assessment->swimming_id=$request->swimming_pool;
+
+        $assessment->property_use=$request->property_use;
+        $assessment->zone=$request->zone;
+        $assessment->no_of_shop=$request->no_of_shop;
+        $assessment->no_of_mast=$request->no_of_mast;
+        $assessment->no_of_compound_house=$request->no_of_compound_house;
+        $assessment->compound_name=$request->compound_name;
+        $assessment->arrear_calc=$request->arrear_calc;
+        $assessment->due=$request->due;
+
+
+        // $assessment->property_rate_without_gst=$request->property_rate_without_gst;
+        $assessment->property_rate_with_gst=$request->property_rate_with_gst;
+        $assessment->property_gst=$request->property_gst;
+       
+
+       // ----start for new counsil adjustment step -1 for insert update and delete and add ---------//
+             //first find and delete previous data
+             $srch=PropertyToCounsilGroupA::where('property_id',$property->id)->where('year',$request->council_year)->first();
+
+             if($srch){
+                $dltall=PropertyToCounsilGroupA::where('property_id',$property->id)->where('year',$request->council_year)->delete();
+             }
+             //insert new data
+             $sumOfPercentage=0;
+
+            $councils = $request->council;
+            // Decode JSON string if necessary
+            if (is_string($councils)) {
+                $councils = json_decode($councils, true);
+            }
+            // Ensure it's an array
+            $councils = is_array($councils) ? $councils : [];
+
+
+            if(@$request->council){
+             foreach(@$councils as $val ){
+               // if(@$val->amount || @$val->value){
+               //  }else{
+                //find counsil adjustment details
+                $adjustmentDetails=CounsilAdjustmentGroupA::where('id',$val)->first();
+                // dd($adjustmentDetails);
+
+                if($adjustmentDetails->sign=="+"){
+                 $sumOfPercentage=$sumOfPercentage+(int)$adjustmentDetails->percentage;
+                }else{
+                  $sumOfPercentage=$sumOfPercentage-(int)$adjustmentDetails->percentage;
+                }
+
+                 $insData=new PropertyToCounsilGroupA;
+                 $insData->property_id=$property->id;
+                 $insData->adjustment_id=$val;
+                 $insData->year=$request->council_year;
+                 $insData->save();
+
+             // }// end if for amount
+            }//foreach end
+           }
+
+           $prevData=PropertyAssessmentDetail::where('property_id',$property->id)->where('id',$request->assessment_id)->first();
+           $prevPercent=$prevData->total_adjustment_percent;
+           // dd($prevPercent);
+
+
+
+            //update the percentage to propert assement details table
+            $updt=PropertyAssessmentDetail::where('property_id',$property->id)->where('id',$request->assessment_id)->update(['total_adjustment_percent'=>$sumOfPercentage]);
+
+            $baseAmount=($request->property_rate_without_gst*100)/ (100+($prevPercent));
+            // dd($data['property_rate_without_gst']);
+
+                $newRateAmount =  $baseAmount * ((100+($sumOfPercentage))/100); 
+         // dd($baseAmount,$prevPercent,$data['property_rate_without_gst'],$sumOfPercentage,$newRateAmount);
+              
+            // ------------------------------------ end-1 -----------------------------------------
+
+
+        $assessment->property_rate_without_gst = $newRateAmount; 
+
+        //image part
+
+            if ($request->hasFile('image1')) {
+                $file = $request->file('image1');
+
+                // Define a unique name with directory structure
+                $filePath = 'property/assessment/image';
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension(); // e.g., 7Y83SbHt7r.jpg
+
+                // Store the file under storage/app/public/property/assessment/image
+                $path = $file->storeAs($filePath, $fileName, 'public');
+
+                // Optionally: save the path to DB
+                $assessment->assessment_images_1 = $path;
+            
+            }
+
+
+            if ($request->hasFile('image2')) {
+                $file = $request->file('image2');
+
+                // Define a unique name with directory structure
+                $filePath = 'property/assessment/image';
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension(); // e.g., 7Y83SbHt7r.jpg
+
+                // Store the file under storage/app/public/property/assessment/image
+                $path = $file->storeAs($filePath, $fileName, 'public');
+
+                // Optionally: save the path to DB
+                $assessment->assessment_images_2 = $path;
+            
+            }
+        $assessment->save();
+
+        //delete and insert
+        // category,type, value added
+        //Property_property_category  Property_property_type  Property_property_value_added
+
+        $dltallcat=Property_property_category::where('property_id',$request->property_id)->where('assessment_id',$request->assessment_id)->delete();
+
+        $propertyCategories = $request->property_categories;
+        if (is_string($propertyCategories)) {
+            $propertyCategories = json_decode($propertyCategories, true);
+        }
+        $propertyCategories = is_array($propertyCategories) ? $propertyCategories : [];
+
+       foreach ($propertyCategories as $val) {
+            $inscat=new Property_property_category;
+            $inscat->property_id=$request->property_id;
+            $inscat->property_category_id=$val;
+            $inscat->assessment_id=$request->assessment_id;
+            $inscat->save();
+        }
+
+
+
+
+
+        $dltalltype=Property_property_type::where('property_id',$request->property_id)->where('assessment_id',$request->assessment_id)->delete();
+
+        $propertyTypes = $request->property_types;
+        // Decode if it's a JSON string
+        if (is_string($propertyTypes)) {
+            $propertyTypes = json_decode($propertyTypes, true);
+        }
+        // Ensure it's an array
+        $propertyTypes = is_array($propertyTypes) ? $propertyTypes : [];
+
+        foreach ($propertyTypes as $val) {
+
+            $instype=new Property_property_type;
+            $instype->property_id=$request->property_id;
+            $instype->property_type_id=$val;
+            $instype->assessment_id=$request->assessment_id;
+            $instype->save();
+        }
+
+
+
+
+
+        $dltallvalue=Property_property_value_added::where('property_id',$request->property_id)->where('assessment_id',$request->assessment_id)->delete();
+
+        $propertyValueAdded = $request->property_value_added;
+        // Decode if it's a JSON string like "[1,2,3]"
+        if (is_string($propertyValueAdded)) {
+            $propertyValueAdded = json_decode($propertyValueAdded, true);
+        }
+        // Ensure it's an array
+        $propertyValueAdded = is_array($propertyValueAdded) ? $propertyValueAdded : [];
+
+        // return response()->json([
+        // 'status' => true,
+        // 'data' => $propertyValueAdded
+        //  ], 200);
+
+        // Now loop safely
+        foreach ($propertyValueAdded as $val) {
+
+            $instype=new Property_property_value_added;
+            $instype->property_id=$request->property_id;
+            $instype->property_value_added_id=$val;
+            $instype->assessment_id=$request->assessment_id;
+            $instype->save();
+        }
+
+ 
+        
+
+        
+
+        return response()->json([
+            'status' => true,
+            'message' => 'assessment details updated successfully.',
+            'data' => $assessment
+        ], 200);
+
+    // } catch (\Exception $e) {
+    //     return response()->json([
+    //          'status' => false,
+    //         'message' => 'Server error: ' . $e->getMessage()
+    //     ], 500);
+    // }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+function encodePlusCode($latitude, $longitude, $codeLength = 10)
+{
+    $codeAlphabet = '23456789CFGHJMPQRVWX';
+    $encodingBase = strlen($codeAlphabet);
+
+    $lat = ($latitude + 90.0) / 180.0;
+    $lng = ($longitude + 180.0) / 360.0;
+
+    $lat *= pow($encodingBase, $codeLength / 2);
+    $lng *= pow($encodingBase, $codeLength / 2);
+
+    $lat = floor($lat);
+    $lng = floor($lng);
+
+    $code = '';
+    for ($i = 0; $i < $codeLength / 2; ++$i) {
+        $latDigit = $lat % $encodingBase;
+        $lngDigit = $lng % $encodingBase;
+        $code = $codeAlphabet[$lngDigit] . $codeAlphabet[$latDigit] . $code;
+        $lat = floor($lat / $encodingBase);
+        $lng = floor($lng / $encodingBase);
+    }
+
+    $code = substr($code, 0, 8) . '+' . substr($code, 8); // Add '+' separator
+
+    return $code;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
