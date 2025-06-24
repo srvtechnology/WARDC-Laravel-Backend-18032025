@@ -58,6 +58,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Models\MillRate;
+use App\Models\OccupancyDetail;
+use App\Models\Property_occupancies;
+use App\Models\Property_property_category;
+use App\Models\Property_property_type;
+use App\Models\Property_property_value_added;
+use App\Models\Property_property_inaccessibles;
 ini_set('memory_limit','512M');
 
 class PropertyControllerApp extends Controller
@@ -126,7 +132,7 @@ class PropertyControllerApp extends Controller
 
 		$property->is_organization = @$request->boolean('is_organization');
 		$property->is_completed = @$request->boolean('is_completed');
-		$property->is_property_inaccessible = @$request->boolean('is_property_inaccessible');
+		// $property->is_property_inaccessible = @$request->boolean('is_property_inaccessible');
 		$property->is_draft_delivered = @$request->boolean('is_draft_delivered');
 
 		$property->delivered_name = @$request->input('delivered_name');
@@ -140,8 +146,19 @@ class PropertyControllerApp extends Controller
             $recipient_photo = @$request->delivered_image->store(Property::DELIVERED_IMAGE);
             $property->delivered_image = $recipient_photo;
         }
+        $propertyInaccessible = array_map('intval', $request->property_inaccessable);
+        $property->is_property_inaccessible = ($propertyInaccessible && count($propertyInaccessible)) ? true : false;
 
         $property->save();
+
+        
+        foreach($propertyInaccessible as $val){
+
+                $insInacc=new Property_property_inaccessibles;
+                $insInacc->property_id=$property->id;
+                $insInacc->property_inaccessible_id=$val;
+                $insInacc->save();
+            }
 
 
         // $property->propertyInaccessible()->sync($request->property_inaccessible); //confussed
@@ -217,12 +234,12 @@ class PropertyControllerApp extends Controller
 			//======== Save/Update single occupancy details=============//
 			$occupancy = $property->occupancy()->firstOrNew([]);
 
-			$tenantTitleLabel = UserTitleTypes::where('id', @$request->tenant_ownerTitle_id)->value('label');
+			$tenantTitleLabel = UserTitleTypes::where('id', @$request->tenant_ownerTitle_id)->first();
 
 			// Assign values directly
 			// dd($request->occupancy_type[0]);
 			$occupancy->type = @$request->occupancy_type[0];
-			$occupancy->ownerTenantTitle = @$request->ownerTenantTitle;
+			$occupancy->ownerTenantTitle_id = @$tenantTitleLabel->id;
 			$occupancy->tenant_first_name = @$request->occupancy_tenant_first_name;
 			$occupancy->middle_name = @$request->occupancy_middle_name;
 			$occupancy->surname = @$request->occupancy_surname;
@@ -234,31 +251,38 @@ class PropertyControllerApp extends Controller
 			// Handle multiple occupancy types
 			$requestedTypes = array_filter($request->occupancy_type ?? []);
 
-			if (!empty($requestedTypes)) {
-			    foreach ($requestedTypes as $type) {
-			        $property->occupancies()->firstOrCreate([
-			            'occupancy_type' => $type
-			        ]);
-			    }
+			// if (!empty($requestedTypes)) {
+			//     foreach ($requestedTypes as $type) {
+			//         $property->occupancies()->firstOrCreate([
+			//             'occupancy_type' => $type
+			//         ]);
+			//     }
 
-			    $property->occupancies()
-			        ->whereNotIn('occupancy_type', @$requestedTypes)
-			        ->delete();
-			}
+			//     $property->occupancies()
+			//         ->whereNotIn('occupancy_type', @$requestedTypes)
+			//         ->delete();
+			// }
+			foreach($requestedTypes as $val){
 
-
-
-
-
-
-
-
-
+                $insOcc=new Property_occupancies;
+                $insOcc->property_id=$property->id;
+                $insOcc->occupancy_type=$val;
+                $insOcc->save();
+            }
 
 
 
 
-			// Save/Update assessment details
+
+
+
+
+
+
+
+
+
+			//========== Save/Update assessment details==============//
 			if ($property->assessment()->exists()) {
 			    $assessmentModel = $property->generateAssessments();
 			} else {
@@ -277,55 +301,55 @@ class PropertyControllerApp extends Controller
 			$paved_tarred_street_percentage = 0;
 
 			$groupName = $request->group_name;
-			$adjustmentPercentage = [];
+			// $adjustmentPercentage = [];
 
-			if (is_array($request->adjustment_ids) && !empty($request->adjustment_ids)) {
+			// if (is_array($request->adjustment_ids) && !empty($request->adjustment_ids)) {
 
-			    // Get all adjustment values in a single query
-			    $adjustmentValues = AdjustmentValue::where('group_name', $groupName)
-			        ->whereIn('adjustment_id', $request->adjustment_ids)
-			        ->pluck('percentage', 'adjustment_id');
+			//     // Get all adjustment values in a single query
+			//     $adjustmentValues = AdjustmentValue::where('group_name', $groupName)
+			//         ->whereIn('adjustment_id', $request->adjustment_ids)
+			//         ->pluck('percentage', 'adjustment_id');
 
-			    foreach ($request->adjustment_ids as $id) {
-			        $percentage = $adjustmentValues[$id] ?? 0;
+			//     foreach ($request->adjustment_ids as $id) {
+			//         $percentage = $adjustmentValues[$id] ?? 0;
 
-			        switch ($id) {
-			            case 1:
-			                $water_percentage = $percentage;
-			                break;
-			            case 2:
-			                $electrical_percentage = $percentage;
-			                break;
-			            case 3:
-			                $waster_percentage = $percentage;
-			                break;
-			            case 4:
-			                $market_percentage = $percentage;
-			                break;
-			            case 5:
-			                $hazardous_percentage = $percentage;
-			                break;
-			            case 6:
-			                $informal_settlement_percentage = $percentage;
-			                break;
-			            case 7:
-			                $easy_street_access_percentage = $percentage;
-			                break;
-			            case 8:
-			                $paved_tarred_street_percentage = $percentage;
-			                break;
-			            default:
-			                $drainage_percentage = $percentage;
-			                break;
-			        }
-			    }
+			//         switch ($id) {
+			//             case 1:
+			//                 $water_percentage = $percentage;
+			//                 break;
+			//             case 2:
+			//                 $electrical_percentage = $percentage;
+			//                 break;
+			//             case 3:
+			//                 $waster_percentage = $percentage;
+			//                 break;
+			//             case 4:
+			//                 $market_percentage = $percentage;
+			//                 break;
+			//             case 5:
+			//                 $hazardous_percentage = $percentage;
+			//                 break;
+			//             case 6:
+			//                 $informal_settlement_percentage = $percentage;
+			//                 break;
+			//             case 7:
+			//                 $easy_street_access_percentage = $percentage;
+			//                 break;
+			//             case 8:
+			//                 $paved_tarred_street_percentage = $percentage;
+			//                 break;
+			//             default:
+			//                 $drainage_percentage = $percentage;
+			//                 break;
+			//         }
+			//     }
 
-			    // Collect all percentages into an array if needed later
-			    //take the data of luck 1st parameter which is value and 2nd param is key
-			    $adjustmentPercentage = $adjustmentValues->values()->toArray();
-			}
+			//     // Collect all percentages into an array if needed later
+			//     //take the data of luck 1st parameter which is value and 2nd param is key
+			//     $adjustmentPercentage = $adjustmentValues->values()->toArray();
+			// }
 
-			 $totalAdjustmentPercent = array_sum($adjustmentPercentage);
+			//  $totalAdjustmentPercent = array_sum($adjustmentPercentage);
 
 
 
@@ -359,7 +383,7 @@ class PropertyControllerApp extends Controller
 			$assessmentModel->compound_name                  = $request->compound_name;
 			$assessmentModel->gated_community                = $request->gated_community ? getSystemConfig(SystemConfig::OPTION_GATED_COMMUNITY) : null;
 
-			$assessmentModel->total_adjustment_percent       = $totalAdjustmentPercent;
+			$assessmentModel->total_adjustment_percent       =  0;
 			$assessmentModel->group_name                     = $millRateGroupName;
 			$assessmentModel->mill_rate                      = $millRate;
 
@@ -376,7 +400,7 @@ class PropertyControllerApp extends Controller
 			$assessmentModel->window_type_percentage         = $request->windowPer ?? 0;
 			$assessmentModel->window_type_type               = $request->windowType ?? 'A';
 
-			// Service-related percentages
+			// Service-related percentages not req
 			$assessmentModel->water_percentage               = $water_percentage;
 			$assessmentModel->electricity_percentage         = $electrical_percentage;
 			$assessmentModel->waste_management_percentage    = $waster_percentage;
@@ -413,7 +437,7 @@ class PropertyControllerApp extends Controller
 
 
 
-			// made it dynamic as per year
+			// made it dynamic as per year  sms code
 			if ($request->input('isDraftDelivered')) {
 
 			    // === Part 1: Initialize Variables ===
@@ -459,16 +483,16 @@ class PropertyControllerApp extends Controller
 			    // === Part 4: Send SMS if mobile number exists ===
 			    if ($mobile_number = $property->landlord->mobile_1) {
 
-			        (new \App\Helper\CustomHelper)->send_sms($arr, $mobile_number);
+			        // (new \App\Helper\CustomHelper)->send_sms($arr, $mobile_number);
 
 			        $name = $request->input('delivered_name');
 			        $year = now()->format('Y');
 
 			        // Validate mobile format before sending notification
 			        if (preg_match('/^\+([1-9]{3})(\d{8})$/', $mobile_number)) {
-			            $property->landlord->notify(
-			                new DraftDeliveredSMSNotification($property, $mobile_number, $name, $year)
-			            );
+			            // $property->landlord->notify(
+			            //     new DraftDeliveredSMSNotification($property, $mobile_number, $name, $year)
+			            // );
 			        }
 			    }
 
@@ -477,6 +501,7 @@ class PropertyControllerApp extends Controller
 			    $assessmentModel->demand_note_recipient_name = $request->input('delivered_name');
 			    $assessmentModel->demand_note_recipient_mobile = $request->input('delivered_number');
 			    $assessmentModel->demand_note_recipient_photo = $recipient_photo;
+			    // dd(1);
 			}
 
 			if ($request->input('swimming_pool')) {
@@ -508,12 +533,12 @@ class PropertyControllerApp extends Controller
 			// $assessment->categories()->sync($categories);
 
 			// // Property Types (Habitat) - Multiple
-			// $types = getSyncArray($request->input('assessment_types'), ['property_id' => $property->id]);
+			// $types = getSyncArray($request->input('property_types'), ['property_id' => $property->id]);
 			// $assessment->types()->sync($types);
 
 			// // Property Type Totals (if exists) - Multiple
-			// if ($request->filled('assessment_types_total')) {
-			//     $typesTotal = getSyncArray($request->input('assessment_types_total'), ['property_id' => $property->id]);
+			// if ($request->filled('property_types_total')) {
+			//     $typesTotal = getSyncArray($request->input('property_types_total'), ['property_id' => $property->id]);
 			//     $assessment->typesTotal()->sync($typesTotal);
 			// }
 
@@ -722,6 +747,8 @@ class PropertyControllerApp extends Controller
 			// -----------------------------------------------------------------------------
 			// 3. Update the Total Adjustment Percentage in Property Assessment Details
 			// -----------------------------------------------------------------------------
+			// dd($totalAdjustmentPercent,$sumOfPercentage);
+			$totalAdjustmentPercent=$sumOfPercentage;
 			PropertyAssessmentDetail::where('property_id', $property->id)
 			    ->whereYear('created_at', $currentYear)
 			    ->update(['total_adjustment_percent' => $totalAdjustmentPercent]);
@@ -744,6 +771,81 @@ class PropertyControllerApp extends Controller
 			        ]);
 			    }
 			}
+
+
+
+
+
+
+
+
+
+			// category,type, value added
+        //Property_property_category  Property_property_type  Property_property_value_added 
+			//payload [1,2,3]
+
+        $dltallcat=Property_property_category::where('property_id',$property->id)->where('assessment_id',$assessmentModel->id)->delete();
+
+        $propertyCategories = $request->assessment_categories_id;
+        if (is_string($propertyCategories)) {
+            $propertyCategories = json_decode($propertyCategories, true);
+        }
+        $propertyCategories = is_array($propertyCategories) ? $propertyCategories : [];
+
+       foreach ($propertyCategories as $val) {
+            $inscat=new Property_property_category;
+            $inscat->property_id=$property->id;
+            $inscat->property_category_id=$val;
+            $inscat->assessment_id=$assessmentModel->id;
+            $inscat->save();
+        }
+
+
+
+
+
+        $dltalltype=Property_property_type::where('property_id',$property->id)->where('assessment_id',$assessmentModel->id)->delete();
+
+        $propertyTypes = $request->property_types;
+        // Decode if it's a JSON string
+        if (is_string($propertyTypes)) {
+            $propertyTypes = json_decode($propertyTypes, true);
+        }
+        // Ensure it's an array
+        $propertyTypes = is_array($propertyTypes) ? $propertyTypes : [];
+
+        foreach ($propertyTypes as $val) {
+
+            $instype=new Property_property_type;
+            $instype->property_id=$property->id;
+            $instype->property_type_id=$val;
+            $instype->assessment_id=$assessmentModel->id;
+            $instype->save();
+        }
+
+
+
+
+
+        $dltallvalue=Property_property_value_added::where('property_id',$property->id)->where('assessment_id',$assessmentModel->id)->delete();
+
+        $propertyValueAdded = $request->assessment_value_added_id;
+        // Decode if it's a JSON string like "[1,2,3]"
+        if (is_string($propertyValueAdded)) {
+            $propertyValueAdded = json_decode($propertyValueAdded, true);
+        }
+        // Ensure it's an array
+        $propertyValueAdded = is_array($propertyValueAdded) ? $propertyValueAdded : [];
+
+        // Now loop safely
+        foreach ($propertyValueAdded as $val) {
+
+            $instype=new Property_property_value_added;
+            $instype->property_id=$property->id;
+            $instype->property_value_added_id=$val;
+            $instype->assessment_id=$assessmentModel->id;
+            $instype->save();
+        }
 
 
 
@@ -828,7 +930,7 @@ class PropertyControllerApp extends Controller
 
 		// // Calculate value added components
 		// $value_added_val = PropertyValueAdded::whereIn('id', $valueAdded)->sum('value');
-		// $property_type_val = PropertyType::whereIn('id', $request->assessment_types ?? [])->sum('value');
+		// $property_type_val = PropertyType::whereIn('id', $request->property_types ?? [])->sum('value');
 
 		// // Add shop and mast values if they exist
 		// if ($shopValue > 0) {
@@ -937,6 +1039,7 @@ class PropertyControllerApp extends Controller
         $mastValue = 0;
         $valueAdded = [8, 9];
         $property_categories = [];
+        // dd($request->assessment_value_added_id);
 
         if (isset($request->assessment_value_added_id) && is_array($request->assessment_value_added_id)) {
             foreach ($valueAdded as $value) {
@@ -951,36 +1054,46 @@ class PropertyControllerApp extends Controller
                 }
             }
             $valueAdded = array_diff($request->assessment_value_added_id, $valueAdded);
+            // dd($shopValue,$mastValue,$valueAdded);
         }
         
         if(isset($request->assessment_window_type_id) and $request->assessment_window_type_id != null){
             $window_val = PropertyWindowType::select('value')->find($request->assessment_window_type_id);
         }
-        if (isset($request->assessment_categories_id) and $request->assessment_categories_id != null)
+        // dd($window_val);
+
+        if (isset($request->assessment_categories_id) and $request->assessment_categories_id != null){
             $property_categories = PropertyCategory::whereIn('id', $request->assessment_categories_id)->get();
+        }
+        // dd($property_categories);
 
-        if (isset($request->assessment_wall_materials_id) and $request->assessment_wall_materials_id != null)
+        if (isset($request->assessment_wall_materials_id) and $request->assessment_wall_materials_id != null){
             $wall_material = PropertyWallMaterials::select('value')->find($request->assessment_wall_materials_id);
+        }
+        // dd($wall_material);
 
-        if (isset($request->assessment_roofs_materials_id) and $request->assessment_roofs_materials_id != null)
+        if (isset($request->assessment_roofs_materials_id) and $request->assessment_roofs_materials_id != null){
             $roof_material = PropertyRoofsMaterials::select('value')->find($request->assessment_roofs_materials_id);
+        }
+        // dd($roof_material);
 
-        if (is_array($request->assessment_value_added_id) and count($request->assessment_value_added_id) > 0)
+        if (is_array($request->assessment_value_added_id) and count($request->assessment_value_added_id) > 0){
             $value_added_val = PropertyValueAdded::whereIn('id', $valueAdded)->sum('value');
+        }
+        // dd($value_added_val);
 
-        if (is_array($request->assessment_types) and count($request->assessment_types) > 0)
-            $property_type_val = PropertyType::whereIn('id', $request->assessment_types)->sum('value');
+        if (is_array($request->property_types) and count($request->property_types) > 0){
+            $property_type_val = PropertyType::whereIn('id', $request->property_types)->sum('value');
+        }
+        // dd($property_type_val);
 
-        // if (isset($request->assessment_dimension_id) and $request->assessment_dimension_id != null)
-        //     $property_dimension = PropertyDimension::select('value')->find($request->assessment_dimension_id);
         if (isset($request->assessment_length) and $request->assessment_length != null and (isset($request->assessment_breadth) and $request->assessment_breadth != null) ) {
-
-
 
             if ($request->has('property_district')) {
                 $district = District::where('name', $request->property_district)->first();
                 if ($district->sq_meter_value) {
-                    //$rate_square_meter = $district->sq_meter_value;
+                    $rate_square_meter = $district->sq_meter_value;
+                    // dd(1,$rate_square_meter);
                 }
             }
 
@@ -989,6 +1102,7 @@ class PropertyControllerApp extends Controller
             //$property_dimension = $request->property_dimension * getSystemConfig(SystemConfig::CURRENT_RATE);
             //$property_dimension = PropertyDimension::select('value')->find($request->property_dimension);
         }
+        // dd($property_dimension);
 
         if (isset($request->assessment_area) and $request->assessment_area != null) {
 
@@ -1008,20 +1122,27 @@ class PropertyControllerApp extends Controller
         }
 
 
-        if (isset($request->assessment_use_id) and $request->assessment_use_id != null)
+        if (isset($request->assessment_use_id) and $request->assessment_use_id != null){
             $property_use = PropertyUse::select('value')->find($request->assessment_use_id);
+        }
 
-        if (isset($request->assessment_zone_id) and $request->assessment_zone_id != null)
+        if (isset($request->assessment_zone_id) and $request->assessment_zone_id != null){
             $zones = PropertyZones::select('value')->find($request->assessment_zone_id);
+        }
+        // dd($property_use,$zones);
 
         /*number of Shop available*/
 
-        if ($shopValue > 0)
+        if ($shopValue > 0){
             $value_added_val = $value_added_val + ($shopValue * $no_of_shops);
+        }
+        // dd($value_added_val,$shopValue , $no_of_shops);
 
         /*number of mast available*/
-        if ($mastValue > 0)
+        if ($mastValue > 0){
             $value_added_val = $value_added_val + ($mastValue * $no_of_mast);
+        }
+        
 
         // $step1 = $wall_material['value'] + $roof_material['value'] + $value_added_val;
         // $step2 = $property_type_val;
@@ -1030,6 +1151,7 @@ class PropertyControllerApp extends Controller
         // $step5 = $zones['value'];
         // $step6 = 0;
         $swimming_pool = optional(Swimming::find($request->swimming_pool))->value;
+        // dd($swimming_pool);
         $step1 = optional($wall_material)->value + optional($roof_material)->value + $value_added_val + optional($window_val)->value + ($swimming_pool ? $swimming_pool : 0);
         $step2 = optional($property_use)->value;
         $step3 = optional($zones)->value;
@@ -1037,6 +1159,7 @@ class PropertyControllerApp extends Controller
         //$step3 = $property_dimension['value'];
         $step0 = $property_dimension;
         $step6 = 0;
+        // dd($step4);
         
 
         $gated_community = $request->gated_community ? getSystemConfig(SystemConfig::OPTION_GATED_COMMUNITY) : 1;
@@ -1048,9 +1171,14 @@ class PropertyControllerApp extends Controller
                 $step6 *= $prop_category->value;
             }
         }
+        // dd($step6);
 
         //$result['rateWithoutGST'] = @(((($step1 * $step2 * $step3 * $step4) * $gated_community) + ($swimming_pool ? $swimming_pool : 0)) / ($step6 > 0 ? $step6 : 1));
         $result['rateWithoutGST'] = @((($step0 + ($step1 *  $step2 * $step3 * $step4)) * $gated_community)  + ($swimming_pool ? $swimming_pool : 0)) * ($step6 > 0 ? $step6 : 1);
+
+        // dd($result['rateWithoutGST']);
+
+
         $wallMaterialPercentage = ($request->wallPer)? $request->wallPer : 0;
         $roofMaterialPercentage = ($request->roofPer)? $request->roofPer : 0;
         $valueAddedPercentage = ($request->valuePer)? $request->valuePer : 0;
@@ -1060,15 +1188,12 @@ class PropertyControllerApp extends Controller
         $totalPercentage = array_sum([$wallMaterialPercentage, $roofMaterialPercentage, $valueAddedPercentage, $windowTypePercentage]);
 
 
-
-
-
         //If property characteristic exist
         if($totalPercentage){
             $result['rateWithoutGST'] = $result['rateWithoutGST'] + ($result['rateWithoutGST'] * ($totalPercentage/100));  
         }
 
-        //dd($result['rateWithoutGST']);
+        // dd($totalPercentage,$result);
 
 
          //----------------//new percentage code
@@ -1110,7 +1235,7 @@ class PropertyControllerApp extends Controller
 
         $result['rateWithGST'] = round($result['rateWithoutGST'] + $result['GST'], 4);
         $result['rateWithoutGST'] = $result['rateWithoutGST'] / 1000;
-
+         // dd($result);
         return $result;
     }
 

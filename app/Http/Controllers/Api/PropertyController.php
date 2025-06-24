@@ -1250,6 +1250,7 @@ public function updateAssessment(Request $request)
     }
 
     $data = $request->all();
+    // $rate = $this->calculateNewRate($request);
 
     // try {
         $property = Property::find($request->property_id);
@@ -1485,6 +1486,255 @@ public function updateAssessment(Request $request)
 
 
 
+
+
+
+  public function calculateNewRate($request)
+    {
+        $assessmentDetails=PropertyAssessmentDetail::find($request->assessment_id);
+        $property_category = 0;
+        $rate_square_meter = 2750.00;
+        $wall_material = 0;
+        $window_val = 0;
+        $roof_material = 0;
+        $value_added_val = 0;
+        $property_type_val = 0;
+        $property_dimension = 0;
+        $property_use = 0;
+        $zones = 0;
+        $no_of_shops = $request->total_shops ? $request->total_shops : $assessmentDetails->no_of_shop;
+        $no_of_mast = $request->total_mast ? $request->total_mast : $assessmentDetails->no_of_mast;
+        $shopValue = 0;
+        $mastValue = 0;
+        $valueAdded = [8, 9];
+        $property_categories = [];
+        // dd($request->property_value_added);
+        // return response()->json([
+        //     'data' =>  json_decode($request->property_types)
+        // ], 200);
+
+        if (isset($request->property_value_added) && is_array(json_decode($request->property_value_added))) {
+            foreach ($valueAdded as $value) {
+                if (in_array($value, json_decode($request->property_value_added))) {
+                    $amount = PropertyValueAdded::select('value')->where('id', $value)->first();
+                    if ($value == 9) {
+                        $shopValue = $amount->value;
+                    }
+                    if ($value == 8) {
+                        $mastValue = $amount->value;
+                    }
+                }
+            }
+            $valueAdded = array_diff(json_decode($request->property_value_added), $valueAdded);
+            // dd($shopValue,$mastValue,$valueAdded);
+        }
+        
+        if(isset($assessmentDetails->property_window_type) and $assessmentDetails->property_window_type != null){
+            $window_val = PropertyWindowType::select('value')->find($assessmentDetails->property_window_type);
+        }
+        // dd($window_val);
+
+        if (isset($request->property_categories) and $request->property_categories != null){
+            $property_categories = PropertyCategory::whereIn('id', json_decode($request->property_categories))->get();
+        }
+        // dd($property_categories);
+
+        if (isset($request->property_wall_materials) and $request->property_wall_materials != null){
+            $wall_material = PropertyWallMaterials::select('value')->find($request->property_wall_materials);
+        }
+        // dd($wall_material);
+
+        if (isset($request->roofs_materials) and $request->roofs_materials != null){
+            $roof_material = PropertyRoofsMaterials::select('value')->find($request->roofs_materials);
+        }
+        // dd($roof_material);
+
+        if (is_array($request->property_value_added) and count(json_decode($request->property_value_added)) > 0){
+            $value_added_val = PropertyValueAdded::whereIn('id', $valueAdded)->sum('value');
+        }
+        // dd($value_added_val);
+
+        if (is_array($request->property_types) and count(json_decode($request->property_types)) > 0){
+            $property_type_val = PropertyType::whereIn('id', $request->property_types)->sum('value');
+        }
+        // dd($property_type_val);
+
+        if (isset($request->length) and $request->length != null and (isset($request->breadth) and $request->breadth != null) ) {
+
+            if ($request->has('property_district')) {
+                $district = District::where('name', $request->property_district)->first();
+                if ($district->sq_meter_value) {
+                    $rate_square_meter = $district->sq_meter_value;
+                    // dd(1,$rate_square_meter);
+                }
+            }
+
+            $property_dimension = ($request->length * $request->breadth) * $rate_square_meter;
+            //$property_dimension = ($request->assessment_area) * $rate_square_meter;
+            //$property_dimension = $request->property_dimension * getSystemConfig(SystemConfig::CURRENT_RATE);
+            //$property_dimension = PropertyDimension::select('value')->find($request->property_dimension);
+        }
+        // dd($property_dimension);
+
+        if (isset($request->assessment_area) and $request->assessment_area != null) {
+
+
+
+            if ($request->has('property_district')) {
+                $district = District::where('name', $request->property_district)->first();
+                if ($district->sq_meter_value) {
+                    //$rate_square_meter = $district->sq_meter_value;
+                }
+            }
+
+            //$property_dimension = ($request->length * $request->breadth) * $rate_square_meter;
+            $property_dimension = ($request->assessment_area) * $rate_square_meter;
+            //$property_dimension = $request->property_dimension * getSystemConfig(SystemConfig::CURRENT_RATE);
+            //$property_dimension = PropertyDimension::select('value')->find($request->property_dimension);
+        }
+
+
+        if (isset($request->property_use) and $request->property_use != null){
+            $property_use = PropertyUse::select('value')->find($request->property_use);
+        }
+
+        if (isset($request->zone) and $request->zone != null){
+            $zones = PropertyZones::select('value')->find($request->zone);
+        }
+        // dd($property_use,$zones);
+
+        /*number of Shop available*/
+
+        if ($shopValue > 0){
+            $value_added_val = $value_added_val + ($shopValue * $no_of_shops);
+        }
+        // dd($value_added_val,$shopValue , $no_of_shops);
+
+        /*number of mast available*/
+        if ($mastValue > 0){
+            $value_added_val = $value_added_val + ($mastValue * $no_of_mast);
+        }
+        
+
+        // $step1 = $wall_material['value'] + $roof_material['value'] + $value_added_val;
+        // $step2 = $property_type_val;
+        // $step3 = $property_dimension['value'];
+        // $step4 = $property_use['value'];
+        // $step5 = $zones['value'];
+        // $step6 = 0;
+        $swimming_pool = optional(Swimming::find($request->swimming_pool))->value;
+        // dd($swimming_pool);
+        $step1 = optional($wall_material)->value + optional($roof_material)->value + $value_added_val + optional($window_val)->value + ($swimming_pool ? $swimming_pool : 0);
+        $step2 = optional($property_use)->value;
+        $step3 = optional($zones)->value;
+        $step4 = $property_type_val;
+        //$step3 = $property_dimension['value'];
+        $step0 = $property_dimension;
+        $step6 = 0;
+        // dd($step4);
+        
+        // return response()->json([
+        //     'ss'=>'1',
+        //     'data' => json_decode(@$request->council)
+        // ], 200);
+
+        $gated_community = $request->gated_community ? getSystemConfig(SystemConfig::OPTION_GATED_COMMUNITY) : 1;
+
+        if (count($property_categories) && $property_categories->count()) {
+            $step6 = 1;
+
+            foreach ($property_categories as $prop_category) {
+                $step6 *= $prop_category->value;
+            }
+        }
+        // dd($step6);
+
+        //$result['rateWithoutGST'] = @(((($step1 * $step2 * $step3 * $step4) * $gated_community) + ($swimming_pool ? $swimming_pool : 0)) / ($step6 > 0 ? $step6 : 1));
+        $result['rateWithoutGST'] = @((($step0 + ($step1 *  $step2 * $step3 * $step4)) * $gated_community)  + ($swimming_pool ? $swimming_pool : 0)) * ($step6 > 0 ? $step6 : 1);
+
+        // dd($result['rateWithoutGST']);
+
+
+        $wallMaterialPercentage = ($request->wallPer)? $request->wallPer : 0;
+        $roofMaterialPercentage = ($request->roofPer)? $request->roofPer : 0;
+        $valueAddedPercentage = ($request->valuePer)? $request->valuePer : 0;
+        $windowTypePercentage = ($request->windowPer)? $request->windowPer : 0;
+
+        //Total percentage of property characteristic
+        $totalPercentage = array_sum([$wallMaterialPercentage, $roofMaterialPercentage, $valueAddedPercentage, $windowTypePercentage]);
+
+
+        //If property characteristic exist
+        if($totalPercentage){
+            $result['rateWithoutGST'] = $result['rateWithoutGST'] + ($result['rateWithoutGST'] * ($totalPercentage/100));  
+        }
+
+        // dd($totalPercentage,$result);
+
+
+
+         //----------------//new percentage code
+        $sumOfPercentage=0;
+         if(@$request->council){
+             foreach(json_decode(@$request->council) as $val ){
+             
+                $counsDetails=CounsilAdjustmentGroupA::where('id',$val)->first();
+                if(@$counsDetails->amount || @$counsDetails->value){
+                }else{
+                if($counsDetails->sign=="+"){
+                 $sumOfPercentage=$sumOfPercentage+(int)$counsDetails->percentage;
+                }else{
+                  $sumOfPercentage=$sumOfPercentage-(int)$counsDetails->percentage;
+                }
+               }// end if for amont
+            } // end foreach
+         }
+            
+            $result['percent_of_adjustments'] =$sumOfPercentage;
+            // //its minus or plus check that
+
+        //If value added exist NEW CALCULATION
+        
+        if(@$request->council){
+          if(count(json_decode(@$request->council))>0){
+            $result['rateWithoutGST'] = $result['rateWithoutGST'] * ((100+($sumOfPercentage))/100); 
+          }
+        }
+
+
+          //------------PREVIOUS CALCULATION --------------//
+        // if(is_array($request->adjustment_ids) && count($request->adjustment_ids)){
+        //     $adjustmentPercentage = AdjustmentValue::where('group_name', $request->group_name)->whereIn('adjustment_id', $request->adjustment_ids)->pluck('percentage')->toArray();
+
+        //     $result['rateWithoutGST'] = $result['rateWithoutGST'] * ((100-array_sum($adjustmentPercentage))/100);            
+        // }
+
+
+        $result['GST'] = $result['rateWithoutGST'] * .15;
+
+        $result['rateWithGST'] = round($result['rateWithoutGST'] + $result['GST'], 4);
+        $result['rateWithoutGST'] = $result['rateWithoutGST'] / 1000;
+       // dd($result);
+        return $result;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function encodePlusCode($latitude, $longitude, $codeLength = 10)
 {
     $codeAlphabet = '23456789CFGHJMPQRVWX';
@@ -1516,6 +1766,144 @@ function encodePlusCode($latitude, $longitude, $codeLength = 10)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+// updateGeoLocation
+  public function updateGeoLocation(Request $request)
+    {
+        // Validate the required fields
+        $validator = Validator::make($request->all(), [
+            'property_geo_registry_id' => 'required|exists:property_geo_registry,id',
+            'property_id' => 'required|exists:properties,id',
+            'digital_address' => 'required',
+            'dor_lat_long' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Find the geo registry record
+        $geoRegistry = PropertyGeoRegistry::findOrFail($request->input('property_geo_registry_id'));
+        $geoRegistryData = PropertyGeoRegistry::findOrFail($request->input('property_geo_registry_id'));
+
+       
+
+         if ($request->dor_lat_long && count(explode(',', $request->dor_lat_long)) === 2) {
+                
+                 list($lat, $lng) = explode(',', $request->dor_lat_long);
+                 $openlocationCode=$this->encodePlusCode($lat, $lng);
+                 // return response()->json([
+                 //    'success' => false,
+                 //    'lat' => $lat,
+                 //    'lng' => $lng,
+                 //    'openlocationCode'=>$openlocationCode
+                 // ], 422);
+
+                $geoExist = PropertyGeoRegistry::where('id', '!=', $geoRegistry->id)
+                    ->where("open_location_code", $openlocationCode)
+                    ->first();
+
+                if ($geoExist) {
+                    // $validator->errors()->add('dor_lat_long', 'This dor lat lng already exists');
+                    return response()->json([
+                            'status' => false,
+                            'errors' =>"This dor lat lng already exists",
+                        ], 422);
+                    }
+            }
+
+
+        // Update geo registry data
+        $geoRegistry->point1=$request->point1;
+        $geoRegistry->point2=$request->point2;
+        $geoRegistry->point3=$request->point3;
+        $geoRegistry->point4=$request->point4;
+        $geoRegistry->point5=$request->point5;
+        $geoRegistry->point6=$request->point6;
+        $geoRegistry->point7=$request->point7;
+        $geoRegistry->point8=$request->point8;
+        $geoRegistry->digital_address=$request->digital_address;
+        $geoRegistry->dor_lat_long=$request->dor_lat_long;
+        $geoRegistry->old_digital_address=$geoRegistryData->digital_address;
+
+        // Generate open location code
+        if ($request->dor_lat_long && count(explode(',', $request->dor_lat_long)) === 2) {
+            list($lat, $lng) = explode(',', $request->dor_lat_long);
+            $geoRegistry->open_location_code = $this->encodePlusCode($lat, $lng);
+        }
+
+        $geoRegistry->save();
+
+        // Handle meter data
+        $property = Property::findOrFail($request->property_id);
+
+    if ($request->has('meterData') && is_array($request->meterData)) {
+            // Get all existing meter IDs for the property
+            $all = RegistryMeter::where('property_id', $request->property_id)->pluck('id')->toArray();
+            $comingIds = [];
+
+            foreach ($request->meterData as $meter) {
+                $imagePath = null;
+
+                // Handle image upload if present
+                if (isset($meter['imageFile']) && $meter['imageFile'] instanceof \Illuminate\Http\UploadedFile) {
+                    $file = $meter['imageFile'];
+                    $filePath = 'property/meter/image';
+                    $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
+                    $imagePath = $file->storeAs($filePath, $fileName, 'public');
+                }
+
+                if (isset($meter['id']) && $meter['id'] !== null) {
+                    // Update existing meter
+                    $comingIds[] = $meter['id']; 
+
+                    $updateData = ['number' => $meter['number']];
+                    if ($imagePath) {
+                        $updateData['image'] = $imagePath;
+                    }
+
+                    RegistryMeter::where('id', $meter['id'])->update($updateData);
+                } else {
+                    // Create new meter
+                    if (!empty($meter['number'])) {
+                        $newMeter = new RegistryMeter;
+                        $newMeter->property_id = $request->property_id;
+                        $newMeter->number = $meter['number'];
+                        if ($imagePath) {
+                            $newMeter->image = $imagePath;
+                        }
+                        $newMeter->save();
+                    }
+                }
+            }
+
+            // Delete meters not coming from frontend
+            $toDelete = array_diff($all, $comingIds);
+            RegistryMeter::whereIn('id', $toDelete)->delete();
+    }
+
+
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Geo registry and meter data updated successfully',
+            'data' => $geoRegistry
+        ]);
+    }
 
 
 
