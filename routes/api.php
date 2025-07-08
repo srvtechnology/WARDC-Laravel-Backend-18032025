@@ -126,6 +126,10 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     Route::post('property-value-added-insert-data',[App\Http\Controllers\Api\PropertyValueAddController::class,'insert']);
     Route::post('property-value-added-update-data',[App\Http\Controllers\Api\PropertyValueAddController::class,'update']);
 
+    // property_inaccessibles
+    Route::get('property-inaccessibles',[App\Http\Controllers\Api\PropertyInaccessibleController::class,'index']);
+    Route::post('property-inaccessibles-insert-data',[App\Http\Controllers\Api\PropertyInaccessibleController::class,'insert']);
+    Route::post('property-inaccessibles-update-data',[App\Http\Controllers\Api\PropertyInaccessibleController::class,'update']);
 
 
 
