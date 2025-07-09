@@ -18,5 +18,10 @@ class AdminUser extends Authenticatable
     protected $hidden = [
         'password',
     ];
+
+    public function payments()
+    {
+        return $this->hasMany('App\Models\PropertyPayment','id','admin_user_id');
+    }
 }
 
