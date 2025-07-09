@@ -131,7 +131,19 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     Route::post('property-inaccessibles-insert-data',[App\Http\Controllers\Api\PropertyInaccessibleController::class,'insert']);
     Route::post('property-inaccessibles-update-data',[App\Http\Controllers\Api\PropertyInaccessibleController::class,'update']);
 
+    // assesment-app-user
+    Route::get('listing-assement-app-user',[App\Http\Controllers\Api\User\AssesmentAppUserController::class,'listing']);
+    Route::post('listing-assement-app-user/insert-data',[App\Http\Controllers\Api\User\AssesmentAppUserController::class,'insert']);
+    Route::get('listing-assement-app-user/edit-data/{id}',[App\Http\Controllers\Api\User\AssesmentAppUserController::class,'edit']);
+    Route::post('listing-assement-app-user/update-data/{id}',[App\Http\Controllers\Api\User\AssesmentAppUserController::class,'update']);
+    Route::get('listing-assement-app-user/delete-data/{id}',[App\Http\Controllers\Api\User\AssesmentAppUserController::class,'destroy']);
 
+    // manage-system-user
+    Route::get('listing-system-user',[App\Http\Controllers\Api\User\SystemUserController::class,'listing']);
+    Route::post('listing-system-user/insert-data',[App\Http\Controllers\Api\User\SystemUserController::class,'insert']);
+    Route::get('listing-system-user/edit-data/{id}',[App\Http\Controllers\Api\User\SystemUserController::class,'edit']);
+    Route::post('listing-system-user/update-data',[App\Http\Controllers\Api\User\SystemUserController::class,'update']);
+    Route::get('listing-system-user/delete-data/{id}',[App\Http\Controllers\Api\User\SystemUserController::class,'delete']);
 
 });
 
