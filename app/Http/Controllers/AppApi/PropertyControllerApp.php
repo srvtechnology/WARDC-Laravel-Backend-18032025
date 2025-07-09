@@ -96,6 +96,7 @@ class PropertyControllerApp extends Controller
 		
 		 // \DB::beginTransaction();
         $rate = $this->calculateNewRate($request);  //confussed
+        dd($rate);
 
 
 
@@ -1160,6 +1161,8 @@ class PropertyControllerApp extends Controller
         $step0 = $property_dimension;
         $step6 = 0;
         // dd($step4);
+
+        // dd($step1,$step2,$step3,$step0,$step6);
         
 
         $gated_community = $request->gated_community ? getSystemConfig(SystemConfig::OPTION_GATED_COMMUNITY) : 1;

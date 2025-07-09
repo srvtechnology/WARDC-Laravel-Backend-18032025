@@ -7,6 +7,7 @@ use App\Http\Middleware\AdminAuthMiddleware;
 use App\Http\Middleware\CheckSanctumToken;
 use App\Http\Controllers\AppApi\PropertyControllerApp;
 use App\Http\Controllers\AppApi\PropertyAssesmentInsertYearly;
+use App\Http\Controllers\Api\PdfGeneratorController;
 
 Route::post('login',[AuthController::class,'login']);
 
@@ -36,6 +37,16 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
 
     // edit updateGeoLocation
    Route::post('/geolocation/update',[PropertyController::class,'updateGeoLocation']);
+   
+    // downlode pdf and excls
+   Route::post('/download-pdf',[PdfGeneratorController::class,'pdfGenerator']);
+   Route::post('/download-envelope',[PdfGeneratorController::class,'pdfEnvelope']);
+    Route::post('/download-payment-excel',[PdfGeneratorController::class,'paymentExal']);
+    Route::post('/download-waybill',[PdfGeneratorController::class,'waybill']);
+    Route::post('/download-summery',[PdfGeneratorController::class,'pdfSummery']);
+    Route::post('/download-demand-note',[PdfGeneratorController::class,'demandnote']);
+    // Route::post('/download-pdf',[PdfGeneratorController::class,'pdfGenerator']);
+    
 
 
 
@@ -54,6 +65,13 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     Route::post('/property-assessment/save/yearly',[PropertyAssesmentInsertYearly::class,'propertyAssessmentSaveYearly']);
     Route::post('/property-assessment/update',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']);
 
+    //===================== PROPERTY-CATEGORY ====================// 
+
+    Route::get('property-categories-listing',[App\Http\Controllers\Api\PropertyCategoryController::class,'index']);
+    Route::post('property-categories-insert',[App\Http\Controllers\Api\PropertyCategoryController::class,'insert']);
+    Route::post('property-categories-update',[App\Http\Controllers\Api\PropertyCategoryController::class,'update']);
+    Route::get('property-categories-single-view/{id}',[App\Http\Controllers\Api\PropertyCategoryController::class,'single']);
+    Route::get('property-categories-delete/{id}',[App\Http\Controllers\Api\PropertyCategoryController::class,'delete']);
 
     //===================== PROPERTY-TYPE ====================// 
     Route::get('property-type-listing',[App\Http\Controllers\Api\PropertyTypeController::class,'index']);
@@ -62,7 +80,8 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     Route::get('property-type-single-view/{id}',[App\Http\Controllers\Api\PropertyTypeController::class,'single']);
     Route::get('property-type-delete/{id}',[App\Http\Controllers\Api\PropertyTypeController::class,'delete']);
 
-    //===================== PROPERTY-CATEGORY ====================// 
+
+     //===================== PROPERTY-CATEGORY ====================// 
 
     Route::get('property-categories-listing',[App\Http\Controllers\Api\PropertyCategoryController::class,'index']);
     Route::post('property-categories-insert',[App\Http\Controllers\Api\PropertyCategoryController::class,'insert']);
@@ -99,7 +118,7 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
 
     //===================== PROPERTY-USE ====================// 
 
-   Route::get('property-use-api',[App\Http\Controllers\Api\PropertyUseController::class,'index']);
+    Route::get('property-use-api',[App\Http\Controllers\Api\PropertyUseController::class,'index']);
     Route::post('property-use-api-insert-data',[App\Http\Controllers\Api\PropertyUseController::class,'insert']);
     Route::post('property-use-api-update-data',[App\Http\Controllers\Api\PropertyUseController::class,'update']);
 
@@ -126,9 +145,75 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     Route::post('property-value-added-insert-data',[App\Http\Controllers\Api\PropertyValueAddController::class,'insert']);
     Route::post('property-value-added-update-data',[App\Http\Controllers\Api\PropertyValueAddController::class,'update']);
 
-
-
+    // property_inaccessibles
+    Route::get('property-inaccessibles',[App\Http\Controllers\Api\PropertyInaccessibleController::class,'index']);
+    Route::post('property-inaccessibles-insert-data',[App\Http\Controllers\Api\PropertyInaccessibleController::class,'insert']);
+    Route::post('property-inaccessibles-update-data',[App\Http\Controllers\Api\PropertyInaccessibleController::class,'update']);
 
 });
 
+
+
+// use Barryvdh\DomPDF\Facade\Pdf;
+
+// Route::get('/test-dompdf-pdf', function () {
+//     $id = 21234;
+
+//     // Simulate dynamic data (you can fetch from DB instead)
+//     $items = [
+//         ['name' => 'Property A', 'value' => 123],
+//         ['name' => 'Property B', 'value' => 456],
+//         ['name' => 'Property C', 'value' => 789],
+//     ];
+
+//     $html = '
+//         <html>
+//             <head>
+//                 <title>PDF Test</title>
+//                 <style>
+//                     body { font-family: DejaVu Sans, sans-serif; font-size: 14px; }
+//                     h1 { color: green; }
+//                     table { width: 100%; border-collapse: collapse; }
+//                     th, td { border: 1px solid #000; padding: 8px; }
+//                 </style>
+//             </head>
+//             <body>
+//                 <h1>DOMPDF PDF for ID: ' . $id . '</h1>
+//                 <p>This PDF contains a list of property items.</p>
+//                 <table>
+//                     <thead>
+//                         <tr>
+//                             <th>#</th>
+//                             <th>Property Name</th>
+//                             <th>Value</th>
+//                         </tr>
+//                     </thead>
+//                     <tbody>';
+    
+//     foreach ($items as $index => $item) {
+//         $html .= '<tr>
+//                     <td>' . ($index + 1) . '</td>
+//                     <td>' . $item['name'] . '</td>
+//                     <td>' . $item['value'] . '</td>
+//                   </tr>';
+//     }
+
+//     $html .= '   </tbody>
+//                 </table>
+//                 <p style="margin-top: 40px;">Generated at: ' . now()->toDateTimeString() . '</p>
+//             </body>
+//         </html>
+//     ';
+
+//     try {
+//         $pdf = Pdf::loadHTML($html)->setPaper('A4');
+
+//         return $pdf->download('property-list-' . $id . '.pdf'); 
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'error' => 'PDF generation failed',
+//             'message' => $e->getMessage()
+//         ], 500);
+//     }
+// });
 
