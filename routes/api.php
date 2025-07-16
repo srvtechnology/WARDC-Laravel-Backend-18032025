@@ -8,6 +8,9 @@ use App\Http\Middleware\CheckSanctumToken;
 use App\Http\Controllers\AppApi\PropertyControllerApp;
 use App\Http\Controllers\AppApi\PropertyAssesmentInsertYearly;
 use App\Http\Controllers\Api\PdfGeneratorController;
+use App\Http\Controllers\Api\PaymentController;
+
+
 
 Route::post('login',[AuthController::class,'login']);
 
@@ -39,13 +42,19 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
    Route::post('/geolocation/update',[PropertyController::class,'updateGeoLocation']);
    
     // downlode pdf and excls
-   Route::post('/download-pdf',[PdfGeneratorController::class,'pdfGenerator']);
-   Route::post('/download-envelope',[PdfGeneratorController::class,'pdfEnvelope']);
+    Route::post('/download-pdf',[PdfGeneratorController::class,'pdfGenerator']);
+    Route::post('/download-envelope',[PdfGeneratorController::class,'pdfEnvelope']);
     Route::post('/download-payment-excel',[PdfGeneratorController::class,'paymentExal']);
     Route::post('/download-waybill',[PdfGeneratorController::class,'waybill']);
-    Route::post('/download-summery',[PdfGeneratorController::class,'pdfSummery']);
+    Route::post('/download-summery',[PdfGeneratorController::class,'propertySummery']);
     Route::post('/download-demand-note',[PdfGeneratorController::class,'demandnote']);
-    // Route::post('/download-pdf',[PdfGeneratorController::class,'pdfGenerator']);
+    Route::post('/download-single-envelope-pdf',[PdfGeneratorController::class,'singleEnvelopeGenerator']);
+
+
+    // property payment
+    Route::post('/payment-search',[PaymentController::class,'paymentSearch']);
+     Route::post('/payment-insert',[PaymentController::class,'paymentInsert']);
+
     
 
 
