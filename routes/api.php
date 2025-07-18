@@ -53,7 +53,8 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
 
     // property payment
     Route::post('/payment-search',[PaymentController::class,'paymentSearch']);
-     Route::post('/payment-insert',[PaymentController::class,'paymentInsert']);
+    Route::post('/payment-insert',[PaymentController::class,'paymentInsert']);
+    Route::post('/payment-delete',[PaymentController::class,'paymentDelete']);
 
     
 

@@ -80,6 +80,15 @@ class PaymentController extends Controller
         $propertyAssesment=PropertyAssessmentDetail::select('*', 'penalty as newpenalty')->where('property_id',$propertyId)->whereYear('created_at', $request->year)->first();
 
         $amountPaid=PropertyPayment::where('property_id', '=', $propertyId)->whereYear('created_at', $request->year)->count('total');
+
+        //allpayments
+        $allPayments=PropertyPayment::where('property_id', '=', $propertyId)->orderBy('id','desc')->with('admin')->get();
+        //all assesments
+        $allAssesments=PropertyAssessmentDetail::select('*', 'penalty as newpenalty')->where('property_id', '=', $propertyId)->orderBy('id','desc')->get();
+        foreach ($allAssesments as $key => $value) {
+            //get payment of that year as total paymemnt
+            $allAssesments[$key]['currentYearTotalPayment']=PropertyPayment::whereYear('created_at', $value->created_at->year)->sum('amount');
+        }
        
         return response()->json([
             'status' => false,
@@ -91,6 +100,8 @@ class PaymentController extends Controller
             'disability_image_path' => $disability_image_path,
             'propertyAssesment'=>$propertyAssesment,
             'amountPaid'=>$amountPaid,
+            'allPayments'=>$allPayments,
+            'allAssesments'=>$allAssesments
         ], 200);
 
 
@@ -166,6 +177,31 @@ class PaymentController extends Controller
         ], 200);
 
 
+    }
+
+
+
+    public function paymentDelete(Request $request){
+        $find= PropertyPayment::where('id',$request->payment_id)->first();
+        if(!$find){
+            return response()->json([
+                'status' => true,
+                'message' =>'Payment Done Successfully.'
+            ], 500);
+        }
+
+        // $property = $payment->property;
+        //update due for that year
+        $assesmentDetails=PropertyAssessmentDetail::where('property_id',$find->property_id)->whereYear('created_at',$find->created_at->year)->first();
+
+        $updateAssesment=PropertyAssessmentDetail::where('property_id',$find->property_id)->whereYear('created_at',$find->created_at->year)->update(['due'=>$assesmentDetails->due + $find->total]);
+
+        $find->delete();
+
+        return response()->json([
+                'status' => true,
+                'message' =>'Payment Deleted Successfully.'
+        ], 200);
     }
 
 
