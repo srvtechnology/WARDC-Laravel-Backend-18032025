@@ -7,14 +7,15 @@ use Folklore\Image\Facades\Image;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
-// use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Property extends Model
 {
     use SoftDeletes;
 
-    // use LogsActivity;
+    use LogsActivity;
     const METER_IMAGE = 'property/meter/image';
     const ASSESSMENT_IMAGE = 'property/assessment/image';
     const LANDLORD_IMAGE = 'property/landlord/image';
@@ -83,6 +84,16 @@ class Property extends Model
     protected $appends = [
         'delivered_image_path','address_image_path','conveyance_image_path'
     ];
+    
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        // dd(\Auth::guard('sanctum')->user()->id);
+        return LogOptions::defaults()
+            ->useLogName('property') // custom log name
+            ->logAll()                          // Log all attributes
+            ->logOnlyDirty();                   // Only log changed values
+    }
 
     public function getDeliveredImagePathAttribute()
     {
