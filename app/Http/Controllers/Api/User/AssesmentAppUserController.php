@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\User;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;
+use App\Models\UserMain;
 use Validator;
 ini_set('memory_limit','512M');
 class AssesmentAppUserController extends Controller
@@ -14,7 +14,7 @@ class AssesmentAppUserController extends Controller
         $response = [];
         try {
 
-         $response['data'] = User::get();
+         $response['data'] = UserMain::get();
          $response['status'] = true;
          return $response;
 
@@ -48,7 +48,7 @@ class AssesmentAppUserController extends Controller
                 ], 422);
           } 
 
-          $user = new User();
+          $user = new UserMain;
           $user->name = $request->name;
           $user->street_name = $request->street_name;
           $user->street_number = $request->street_number;
@@ -56,6 +56,8 @@ class AssesmentAppUserController extends Controller
           $user->email = $request->email;
           $user->password = \Hash::make($request->password);
           $user->is_active = $request->is_active;
+          $user->image = '';
+          $user->ward = '';
           $user->save();
           $response['status'] = true;
           $response['message'] = 'Data inserted successfully';
@@ -75,7 +77,7 @@ class AssesmentAppUserController extends Controller
         $response = [];
         try {
 
-         $response['data'] = User::where('id',$id)->first();
+         $response['data'] = UserMain::where('id',$id)->first();
          $response['status'] = true;
          return $response;
 
@@ -109,7 +111,7 @@ class AssesmentAppUserController extends Controller
             }
 
             // Find and update user
-            $user = User::findOrFail($request->id);
+            $user = UserMain::findOrFail($request->id);
             $user->update([
                 'name' => $request->name,
                 'gender' => $request->gender,
@@ -138,7 +140,7 @@ class AssesmentAppUserController extends Controller
         $response = [];
 
         try {
-            $user = User::find($id);
+            $user = UserMain::find($id);
 
             if (!$user) {
                 $response['status'] = false;
