@@ -173,18 +173,20 @@ class PropertyAssesmentInsertYearly extends Controller
 
 
 
-
+// update existing propery array, due etc..
 public function propertyAssessmentUpdate(Request $request){
 
 
-     $propertyId=$request->propertyId;
+
+
+     $propertyId=$request->propertyId;  // need foreach loop of property
 
    	// Step 1: Get all assessment rows for this property
 		$assessments = PropertyAssessmentDetail::where('property_id', $propertyId)
 		    ->orderBy('created_at', 'asc')
 		    ->get();
 
-  // Step 1: Get first and last year from assessments
+     // Step 1: Get first and last year from assessments
 		$firstYear = Carbon::parse($assessments->first()->created_at)->year;
 		$lastYear = Carbon::parse($assessments->last()->created_at)->year;
 

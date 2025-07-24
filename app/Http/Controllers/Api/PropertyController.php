@@ -1250,7 +1250,9 @@ public function updateAssessment(Request $request)
     }
 
     $data = $request->all();
-    // $rate = $this->calculateNewRate($request);
+    $rate = $this->calculateNewRate($request);
+
+    // return response()->json(['rate'=>$rate]);
 
     // try {
         $property = Property::find($request->property_id);
@@ -1282,8 +1284,13 @@ public function updateAssessment(Request $request)
 
 
         // $assessment->property_rate_without_gst=$request->property_rate_without_gst;
-        $assessment->property_rate_with_gst=$request->property_rate_with_gst;
-        $assessment->property_gst=$request->property_gst;
+        // $assessment->property_rate_with_gst=$request->property_rate_with_gst; new cmt
+        // $assessment->property_gst=$request->property_gst;  //new cmt
+
+        $assessment->property_rate_without_gst=$rate['rateWithoutGST'];
+        $assessment->property_rate_with_gst=$rate['GST']; 
+        $assessment->property_gst=$rate['rateWithGST']; 
+
        
 
        // ----start for new counsil adjustment step -1 for insert update and delete and add ---------//
@@ -1338,16 +1345,16 @@ public function updateAssessment(Request $request)
             //update the percentage to propert assement details table
             $updt=PropertyAssessmentDetail::where('property_id',$property->id)->where('id',$request->assessment_id)->update(['total_adjustment_percent'=>$sumOfPercentage]);
 
-            $baseAmount=($request->property_rate_without_gst*100)/ (100+($prevPercent));
+            // $baseAmount=($request->property_rate_without_gst*100)/ (100+($prevPercent)); // new cmt
             // dd($data['property_rate_without_gst']);
 
-                $newRateAmount =  $baseAmount * ((100+($sumOfPercentage))/100); 
+                // $newRateAmount =  $baseAmount * ((100+($sumOfPercentage))/100);  //new cmt
          // dd($baseAmount,$prevPercent,$data['property_rate_without_gst'],$sumOfPercentage,$newRateAmount);
               
             // ------------------------------------ end-1 -----------------------------------------
 
 
-        $assessment->property_rate_without_gst = $newRateAmount; 
+        // $assessment->property_rate_without_gst = $newRateAmount; // new cmt
 
         //image part
 
@@ -1538,6 +1545,9 @@ public function updateAssessment(Request $request)
             $property_categories = PropertyCategory::whereIn('id', json_decode($request->property_categories))->get();
         }
         // dd($property_categories);
+        //  return response()->json([
+        //     'property_categories' => $property_categories  //0
+        // ], 200);
 
         if (isset($request->property_wall_materials) and $request->property_wall_materials != null){
             $wall_material = PropertyWallMaterials::select('value')->find($request->property_wall_materials);
@@ -1549,14 +1559,18 @@ public function updateAssessment(Request $request)
         }
         // dd($roof_material);
 
-        if (is_array($request->property_value_added) and count(json_decode($request->property_value_added)) > 0){
-            $value_added_val = PropertyValueAdded::whereIn('id', $valueAdded)->sum('value');
+        if (is_array(json_decode($request->property_value_added)) and count(json_decode($request->property_value_added)) > 0){
+            $value_added_val = PropertyValueAdded::whereIn('id', array_values($valueAdded))->sum('value');
         }
-        // dd($value_added_val);
 
-        if (is_array($request->property_types) and count(json_decode($request->property_types)) > 0){
-            $property_type_val = PropertyType::whereIn('id', $request->property_types)->sum('value');
+       if (is_array($propertyTypess = json_decode($request->property_types, true)) && count($propertyTypess) > 0) {
+            $property_type_val = PropertyType::whereIn('id', $propertyTypess)->sum('value');
         }
+
+
+        //  return response()->json([
+        //     'property_type_val' => $property_type_val  //0
+        // ], 200);
         // dd($property_type_val);
 
         if (isset($request->length) and $request->length != null and (isset($request->breadth) and $request->breadth != null) ) {
@@ -1602,6 +1616,9 @@ public function updateAssessment(Request $request)
             $zones = PropertyZones::select('value')->find($request->zone);
         }
         // dd($property_use,$zones);
+        //   return response()->json([
+        //     'valueadded' => $value_added_val  //0
+        // ], 200);
 
         /*number of Shop available*/
 
@@ -1615,6 +1632,10 @@ public function updateAssessment(Request $request)
             $value_added_val = $value_added_val + ($mastValue * $no_of_mast);
         }
         
+        // return response()->json([
+        //     'valueadded' => $value_added_val
+        // ], 200);
+
 
         // $step1 = $wall_material['value'] + $roof_material['value'] + $value_added_val;
         // $step2 = $property_type_val;
@@ -1629,7 +1650,7 @@ public function updateAssessment(Request $request)
         $step3 = optional($zones)->value;
         $step4 = $property_type_val;
         //$step3 = $property_dimension['value'];
-        $step0 = $property_dimension;
+        $step0 = round($property_dimension);
         $step6 = 0;
         // dd($step4);
         
@@ -1637,6 +1658,17 @@ public function updateAssessment(Request $request)
         //     'ss'=>'1',
         //     'data' => json_decode(@$request->council)
         // ], 200);
+
+        // return response()->json([
+        //     'step1' => $step1,
+        //     'step2' => $step2,
+        //     'step3' => $step3,
+        //     'step0' => $step0,
+        //     'step6' => $step6,
+        // ], 200);
+
+
+
 
         $gated_community = $request->gated_community ? getSystemConfig(SystemConfig::OPTION_GATED_COMMUNITY) : 1;
 
