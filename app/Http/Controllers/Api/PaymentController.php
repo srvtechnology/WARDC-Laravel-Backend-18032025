@@ -16,6 +16,7 @@ use App\Models\PaymentAjdustDetails;
 use Illuminate\Support\Facades\Auth;
 use App\Models\PropertyAssessmentDetail;
 use Illuminate\Support\Facades\Validator;
+use Spatie\Activitylog\Models\Activity;
 
 class PaymentController extends Controller
 {
@@ -311,5 +312,30 @@ public function paymentUpdate( Request $request)
 
 
 
+
+
+// ============ logs =============//
+public function all_logs(Request $request)
+{
+    $query = Activity::query();
+
+    // Filter by log_name
+    if ($request->has('log_name') && $request->log_name != '') {
+        $query->where('log_name', $request->log_name);
+    }
+
+    // Filter by last X days
+    if ($request->has('last_days') && is_numeric($request->last_days)) {
+        $query->where('created_at', '>=', now()->subDays($request->last_days));
+    }
+
+    // Paginate results (30 per page)
+    $logs = $query->orderBy('created_at', 'desc')->paginate(30);
+
+    return response()->json([
+        'status' => true,
+        'data' => $logs
+    ]);
+}
 
 }
