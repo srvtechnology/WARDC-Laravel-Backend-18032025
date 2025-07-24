@@ -23,5 +23,10 @@ class AdminUser extends Authenticatable
     {
         return $this->hasMany('App\Models\PropertyPayment','id','admin_user_id');
     }
+
+    public function role_details()
+    {
+        return $this->hasOne('App\Models\RoleModel','id','role_id');
+    }
 }
 

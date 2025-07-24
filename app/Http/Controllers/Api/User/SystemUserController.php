@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AdminUser;
+use App\Models\RoleModel;
+use Validator;
 class SystemUserController extends Controller
 {
     public function listing()
@@ -12,7 +14,7 @@ class SystemUserController extends Controller
         $response = [];
         try {
 
-         $response['data'] = AdminUser::where([['id', '!=', 1]])->get();
+         $response['data'] = AdminUser::with('role_details')->where([['id', '!=', 1]])->get();
          $response['status'] = true;
          return $response;
 
@@ -25,15 +27,16 @@ class SystemUserController extends Controller
         }
     }
 
-    public function insert()
+    public function insert(Request $request)
     {
         $response = [];
         try {
 
           $validator = Validator::make($request->all(), [ 
-            'name' => 'required',
+            'first_name' => 'required',
+            'last_name' => 'required',
             'gender' => 'required',
-            'email' => 'required',
+            'email' => 'required|email|unique:admin_users,email',
             'password' => 'required',
             'street_name' => 'required',
             'street_number' => 'required',
@@ -48,7 +51,8 @@ class SystemUserController extends Controller
           } 
 
           $user = new AdminUser();
-          $user->name = $request->name;
+          $user->first_name = $request->first_name;
+          $user->last_name = $request->last_name;
           $user->street_name = $request->street_name;
           $user->street_number = $request->street_number;
           $user->gender = $request->gender;
@@ -94,12 +98,13 @@ class SystemUserController extends Controller
         try {
             // Validation without password
             $validator = Validator::make($request->all(), [ 
-                'name' => 'required',
+                'first_name' => 'required',
+                'last_name' => 'required',
                 'gender' => 'required',
-                'email' => 'required|email',
                 'street_name' => 'required',
                 'street_number' => 'required',
                 'role_id' => 'required',
+                'id' => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -110,11 +115,10 @@ class SystemUserController extends Controller
             }
 
             // Find and update user
-            $user = AdminUser::findOrFail($request->id);
-            $user->update([
-                'name' => $request->name,
+            AdminUser::where('id',$request->id)->update([
+                'first_name' => $request->first_name,
                 'gender' => $request->gender,
-                'email' => $request->email,
+                'last_name' => $request->last_name,
                 'street_name' => $request->street_name,
                 'street_number' => $request->street_number,
                 'role_id' => $request->role_id,
@@ -165,6 +169,24 @@ class SystemUserController extends Controller
             $response['message'] = 'An error occurred.';
             $response['error'] = $e->getMessage();
             return response()->json($response, 500);
+        }
+    }
+
+    public function getRoleListing()
+    {
+        $response = [];
+        try {
+
+         $response['data'] = RoleModel::get();
+         $response['status'] = true;
+         return $response;
+
+        }catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'An error occurred',
+            'error' => $e->getMessage()
+        ], 500);
         }
     }
 }
