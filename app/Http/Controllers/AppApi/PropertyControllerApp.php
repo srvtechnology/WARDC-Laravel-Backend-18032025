@@ -96,7 +96,7 @@ class PropertyControllerApp extends Controller
 		
 		 // \DB::beginTransaction();
         $rate = $this->calculateNewRate($request);  //confussed
-        dd($rate);
+        // dd($rate);
 
 
 
