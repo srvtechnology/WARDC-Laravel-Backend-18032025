@@ -330,7 +330,7 @@ public function all_logs(Request $request)
     }
 
     // Paginate results (30 per page)
-    $logs = $query->orderBy('created_at', 'desc')->paginate(30);
+    $logs = $query->orderBy('created_at', 'desc')->with('causer', 'subject')->paginate(30);
 
     return response()->json([
         'status' => true,
