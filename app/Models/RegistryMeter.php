@@ -5,10 +5,11 @@ namespace App\Models;
 use Folklore\Image\Facades\Image;
 use Illuminate\Database\Eloquent\Model;
 // use Spatie\Activitylog\Traits\LogsActivity;
-
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 class RegistryMeter extends Model
 {
-    // use LogsActivity;
+    use LogsActivity;
     protected $fillable = [
         'number',
         'image'
@@ -19,6 +20,15 @@ class RegistryMeter extends Model
     protected static $logName = 'property-registry-meter';
 
     protected $appends = ['original', 'small_preview', 'large_preview'];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        // dd(\Auth::guard('sanctum')->user()->id);
+        return LogOptions::defaults()
+            ->useLogName('property-registry-meter') // custom log name
+            ->logAll()                          // Log all attributes
+            ->logOnlyDirty();                   // Only log changed values
+    }
 
     public function getSmallPreviewAttribute()
     {

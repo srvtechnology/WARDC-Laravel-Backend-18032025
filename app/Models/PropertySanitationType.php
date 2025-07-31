@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 // use Spatie\Activitylog\Traits\LogsActivity;
-
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 class PropertySanitationType extends Model
 {
-    // use LogsActivity;
+    use LogsActivity;
     protected $fillable = [
         'label', 'value',
     ];
@@ -21,5 +22,12 @@ class PropertySanitationType extends Model
     protected $hidden = [
         'pivot'
     ];
-
+    public function getActivitylogOptions(): LogOptions
+    {
+        // dd(\Auth::guard('sanctum')->user()->id);
+        return LogOptions::defaults()
+            ->useLogName('property-sanitation-types') // custom log name
+            ->logAll()                          // Log all attributes
+            ->logOnlyDirty();                   // Only log changed values
+    }
 }

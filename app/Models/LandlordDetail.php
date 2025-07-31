@@ -6,11 +6,12 @@ use Folklore\Image\Facades\Image;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 // use Spatie\Activitylog\Traits\LogsActivity;
-
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 class LandlordDetail extends Model
 {
     use Notifiable;
-    // use LogsActivity;
+    use LogsActivity;
     const DOCUMENT_IMAGE = 'property/landownerdocuments/image';
     //
     protected $fillable = [
@@ -56,6 +57,15 @@ class LandlordDetail extends Model
     protected static $logAttributes = ['*'];
     protected static $logOnlyDirty = true;
     protected static $logName = 'property-landlord';
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        // dd(\Auth::guard('sanctum')->user()->id);
+        return LogOptions::defaults()
+            ->useLogName('property-landlord') // custom log name
+            ->logAll()                          // Log all attributes
+            ->logOnlyDirty();                   // Only log changed values
+    }
 
     protected $appends = ['original', 'small_preview', 'large_preview', 'phone_number', 'document_image_path','address_image_path','conveyance_image_path'];
 

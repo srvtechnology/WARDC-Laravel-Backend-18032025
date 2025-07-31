@@ -6,11 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Folklore\Image\Facades\Image;
 use Illuminate\Database\Eloquent\SoftDeletes;
 // use Spatie\Activitylog\Traits\LogsActivity;
-
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 class PropertyPayment extends Model
 {
     use SoftDeletes;
-
+    use LogsActivity;
     const PHYSICAL_RECEIPT_IMAGE = 'property/physical_receipt/image';
     const PENSIONER_DISCOUNT_IMAGE = 'property/pensioner_discount/image';
     const DISABILITY_DISCOUNT_IMAGE = 'property/disability_discount/image';
@@ -38,6 +39,15 @@ class PropertyPayment extends Model
     protected static $logAttributes = ['*'];
     protected static $logOnlyDirty = true;
     protected static $logName = 'property-payment';
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        // dd(\Auth::guard('sanctum')->user()->id);
+        return LogOptions::defaults()
+            ->useLogName('property-payment') // custom log name
+            ->logAll()                          // Log all attributes
+            ->logOnlyDirty();                   // Only log changed values
+    }
 
     public function admin()
     {

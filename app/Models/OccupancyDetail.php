@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 // use Spatie\Activitylog\Traits\LogsActivity;
 // use Spatie\Activitylog\Models\Activity;
-
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 class OccupancyDetail extends Model
 {
-    // use LogsActivity;
+    use LogsActivity;
     protected $fillable = [
         'ownerTenantTitle','tenant_first_name', 'middle_name', 'surname', 'mobile_1', 'mobile_2'
     ];
@@ -24,6 +25,15 @@ class OccupancyDetail extends Model
     //     });        
     //     //exit("{$activity}.activity.logs.message.{$eventName}");
     // }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        // dd(\Auth::guard('sanctum')->user()->id);
+        return LogOptions::defaults()
+            ->useLogName('property-occupancy-detail') // custom log name
+            ->logAll()                          // Log all attributes
+            ->logOnlyDirty();                   // Only log changed values
+    }
 
    public function property()
     {

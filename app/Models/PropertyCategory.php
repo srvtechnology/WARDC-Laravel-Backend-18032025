@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 // use Spatie\Activitylog\Traits\LogsActivity;
 // use Spatie\Activitylog\Models\Activity;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class PropertyCategory extends Model
 {
-    // use LogsActivity;
+    use LogsActivity;
     protected $fillable = [
         'label', 'value', 'is_active',
     ];
@@ -26,6 +28,15 @@ class PropertyCategory extends Model
     //     });        
     //     //exit("{$activity}.activity.logs.message.{$eventName}");
     // }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        // dd(\Auth::guard('sanctum')->user()->id);
+        return LogOptions::defaults()
+            ->useLogName('property-category') // custom log name
+            ->logAll()                          // Log all attributes
+            ->logOnlyDirty();                   // Only log changed values
+    }
 
     public function assessments()
     {
