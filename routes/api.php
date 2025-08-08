@@ -181,6 +181,17 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     Route::get('listing-system-user/delete-data/{id}',[App\Http\Controllers\Api\User\SystemUserController::class,'delete']);
     Route::get('get-roles-listing',[App\Http\Controllers\Api\User\SystemUserController::class,'getRoleListing']);
 
+    // chart-data
+    Route::post('/property-analytics', [App\Http\Controllers\Api\ChartContoller::class, 'propertyAnalytics']);
+    Route::post('/property-payment-collection', [App\Http\Controllers\Api\ChartContoller::class, 'propertyPaymentCollection']);
+    Route::post('/dashboard-counters', [App\Http\Controllers\Api\ChartContoller::class, 'dashboardCounters']);
+
+    Route::get('/dashboard/get-ward-user', [App\Http\Controllers\Api\ChartContoller::class, 'getFilters']);
+    Route::post('/dashboard/filtered-payments', [App\Http\Controllers\Api\ChartContoller::class, 'getFilteredPayments']);
+    Route::post('/yearly-assessment-due', [App\Http\Controllers\Api\ChartContoller::class, 'yearlyAssessmentDueCollection']);
+    Route::post('/filtered-payments-due', [App\Http\Controllers\Api\ChartContoller::class, 'getFilteredAssessmentDue']);
+
+
 });
 
 
