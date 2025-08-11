@@ -457,20 +457,20 @@ public function index(Request $request): JsonResponse
             }
         });
 
-        // // Occupancy Filters  done 31, 32,33
-        $query->whereHas('occupancy', function ($q) use ($request) {
-            if ($request->filled('tenant_first_name')) {
-                $q->where('tenant_first_name', 'like', "%{$request->tenant_first_name}%");
-            }
+        // // // Occupancy Filters  done 31, 32,33  error 1633
+        // $query->whereHas('occupancy', function ($q) use ($request) {
+        //     if ($request->filled('tenant_first_name')) {
+        //         $q->where('tenant_first_name', 'like', "%{$request->tenant_first_name}%");
+        //     }
 
-            if ($request->filled('tenant_middle_name')) {
-                $q->where('middle_name', 'like', "%{$request->tenant_middle_name}%");
-            }
+        //     if ($request->filled('tenant_middle_name')) {
+        //         $q->where('middle_name', 'like', "%{$request->tenant_middle_name}%");
+        //     }
 
-            if ($request->filled('tenant_last_name')) {
-                $q->where('surname', 'like', "%{$request->tenant_last_name}%");
-            }
-        });
+        //     if ($request->filled('tenant_last_name')) {
+        //         $q->where('surname', 'like', "%{$request->tenant_last_name}%");
+        //     }
+        // });
 
         // Landlord Telephone Number  done 34
         if ($request->filled('telephone_number')) {
