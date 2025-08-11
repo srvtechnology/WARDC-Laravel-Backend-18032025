@@ -5,7 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Folklore\Image\Facades\Image;
-
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class InaccessibleProperty extends Model
 {
@@ -55,6 +56,15 @@ class InaccessibleProperty extends Model
     public function getInaccessbileImagePath($width = 800, $height = 800)
     {
         return $this->hasInaccessbileImage() ? url(Image::url($this->inaccessbile_property_image, $width, $height, [])) : null;   
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        // dd(\Auth::guard('sanctum')->user()->id);
+        return LogOptions::defaults()
+            ->useLogName('inaccessbile-property-details') // custom log name
+            ->logAll()                          // Log all attributes
+            ->logOnlyDirty();                   // Only log changed values
     }
 }
 

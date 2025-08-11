@@ -5,11 +5,12 @@ namespace App\Models;
 use Folklore\Image\Facades\Image;
 use Illuminate\Database\Eloquent\Model;
 // use Spatie\Activitylog\Traits\LogsActivity;
-
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 class PropertyGeoRegistry extends Model
 {
     //
-    // use LogsActivity;
+    use LogsActivity;
     protected $fillable = [
         'meter_number', 'property_types_id', 'meter_images', 'point1', 'point2', 'point3', 'point4', 'point5', 'point6', 'point7', 'point8', 'digital_address', 'dor_lat_long', 'old_digital_address', 'open_location_code'
     ];
@@ -21,6 +22,15 @@ class PropertyGeoRegistry extends Model
     protected $table = 'property_geo_registry';
 
     protected $appends = ['small_preview', 'large_preview'];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        // dd(\Auth::guard('sanctum')->user()->id);
+        return LogOptions::defaults()
+            ->useLogName('property-geo-registry') // custom log name
+            ->logAll()                          // Log all attributes
+            ->logOnlyDirty();                   // Only log changed values
+    }
 
     public function getSmallPreviewAttribute()
     {

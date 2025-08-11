@@ -6,10 +6,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 // use Spatie\Activitylog\Traits\LogsActivity;
-
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 class PropertyAssessmentDetail extends Model
 {
-    // use LogsActivity;
+    use LogsActivity;
     protected $table = 'property_assessment_details';
 
     protected $currentYearTotalDue;
@@ -98,6 +99,15 @@ class PropertyAssessmentDetail extends Model
         'assessment_breadth',
         'assessment_square_meter'
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        // dd(\Auth::guard('sanctum')->user()->id);
+        return LogOptions::defaults()
+            ->useLogName('property-assessment-details') // custom log name
+            ->logAll()                          // Log all attributes
+            ->logOnlyDirty();                   // Only log changed values
+    }
 
     protected $dates = [
         'last_printed_at',
