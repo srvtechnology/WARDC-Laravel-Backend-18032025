@@ -28,5 +28,10 @@ class AdminUser extends Authenticatable
     {
         return $this->hasOne('App\Models\RoleModel','id','role_id');
     }
+
+     public function role()
+    {
+        return $this->belongsTo(\App\Models\RoleModel::class, 'role_id');
+    }
 }
 

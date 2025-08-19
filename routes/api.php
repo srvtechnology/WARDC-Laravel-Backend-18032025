@@ -9,6 +9,7 @@ use App\Http\Controllers\AppApi\PropertyControllerApp;
 use App\Http\Controllers\AppApi\PropertyAssesmentInsertYearly;
 use App\Http\Controllers\Api\PdfGeneratorController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\RoleController;
 
 
 
@@ -259,3 +260,35 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
 //     }
 // });
 
+
+Route::middleware(['auth:sanctum', /*'check.inactivity'*/])->group(function () {
+Route::get('/roles-new', [RoleController::class, 'index']);
+Route::post('/roles-new', [RoleController::class, 'store']);
+Route::get('/roles-new/{id}', [RoleController::class, 'show']);
+Route::post('/roles-new/{id}/permissions', [RoleController::class, 'updatePermissions']);
+Route::delete('/roles-new/{id}', [RoleController::class, 'delete']);
+
+Route::get('/permissions-new', [RoleController::class, 'permission_index']);
+
+Route::get('/all-logs', [RoleController::class, 'all_logs']);
+
+});
+
+Route::middleware('auth:sanctum')->get('/user-permissions', [RoleController::class, 'getUserPermissions']);
+
+ Route::get('/user', function (Request $request) {
+        if (Auth::check()) {
+            $user = auth()->user();
+            
+            // Eager load roles and permissions
+            $user->load('role');
+            
+    
+            // Log user details
+            Log::info('User API Response: ' . json_encode($user));
+    
+            return response()->json($user);
+        }
+    
+        return response()->json(['message' => 'Unauthorized'], 401);
+    })->middleware('auth:sanctum');
