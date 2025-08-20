@@ -292,3 +292,16 @@ Route::middleware('auth:sanctum')->get('/user-permissions', [RoleController::cla
     
         return response()->json(['message' => 'Unauthorized'], 401);
     })->middleware('auth:sanctum');
+
+
+
+
+
+
+
+
+
+
+
+ // =================== ALL API BELOW FOR MOBILE APP =========================== //
+ 
