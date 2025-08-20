@@ -45,7 +45,7 @@ class RoleController extends Controller
                 'guard_name' => 'admin'
             ]);
 
-            // audit_log('add', 'role', $role->id, request()->all());
+            audit_log('created', 'role', $role->id, request()->all());
 
             return response()->json([
                 'success' => true,
@@ -101,9 +101,9 @@ class RoleController extends Controller
             });
 
 
-            // audit_log('add', 'role', $role->id, [
-            // 'permissions' => json_encode($request->all()),
-            // ]);
+            audit_log('updated', 'role_permission', $role->id, [
+            'permissions' => json_encode($request->all()),
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -135,9 +135,9 @@ class RoleController extends Controller
                 $role->delete();
             });
 
-             // audit_log('add', 'role', $role->id, [
-             //    'deleted_id' => $role->id,
-             //    ]);
+             audit_log('deleted', 'role_permission', $role->id, [
+                'deleted_id' => $role->id,
+                ]);
 
             return response()->json([
                 'success' => true,

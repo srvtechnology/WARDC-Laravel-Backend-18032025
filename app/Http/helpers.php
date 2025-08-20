@@ -7,6 +7,28 @@ use App\Models\Attribute;
 use App\LicenseAmountHistory;
 use App\UserAssignedBusiness;
 use App\UserAssignedStreetApplication;
+use App\Models\AuditModel;
+
+if (!function_exists('audit_log')) {
+    function audit_log($action, $category,$entity_id=null, $extraData = null)
+    {
+         $user = auth('sanctum')->user();
+        $requestdatas = is_array($extraData) || is_object($extraData)
+            ? json_encode($extraData)
+            : (string) $extraData;
+
+        $audit = new AuditModel();
+        $audit->causer_id     = $user->id;
+        $audit->causer_type   = get_class($user);
+        $audit->log_name    = $category;
+        $audit->description   = $action;
+
+        $audit->properties = $requestdatas;
+        $audit->subject_id = $entity_id;
+        $audit->save();
+
+    }
+}
 
 
 function encodePlusCode($latitude, $longitude, $codeLength = 10)
