@@ -192,6 +192,8 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     Route::post('/yearly-assessment-due', [App\Http\Controllers\Api\ChartContoller::class, 'yearlyAssessmentDueCollection']);
     Route::post('/filtered-payments-due', [App\Http\Controllers\Api\ChartContoller::class, 'getFilteredAssessmentDue']);
 
+    Route::post('change-password-api',[App\Http\Controllers\Api\ProfileController::class,'changePassword']);
+    Route::post('update-profile', [App\Http\Controllers\Api\ProfileController::class, 'updateProfile']);
 
 });
 
