@@ -1246,6 +1246,30 @@ class PropertyControllerApp extends Controller
 
 
 
+
+public function propertyGet(){
+
+   $user = Auth::guard('sanctum')->user();
+
+    $property = Property::with([
+        'landlord',
+        'assessment',
+        'geoRegistry',
+        'user',
+        'occupancies',
+        'propertyInaccessible',
+        'payments',
+        'districts',
+        'images',
+        'assessment',
+    ])->where('user_id', $user->id)->get();
+
+    return response()->json([
+	    'success' => true,
+	    'message' => 'Property data retrieved successfully.',
+	    'data' => $property
+	], 200);
+}
 	
     
 

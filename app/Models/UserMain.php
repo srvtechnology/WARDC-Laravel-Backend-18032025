@@ -2,29 +2,25 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
 
-class UserMain extends Model
+class UserMain extends Authenticatable
 {
-    //
+    use HasApiTokens, Notifiable;
+
     protected $table = "users";
+
     protected $fillable = [
-        'name', 'image', 'email', 'password', 'ward', 'constituency', 'section', 'chiefdom', 'district', 'province', 'street_name', 'street_number', 'gender', 'is_active', 'assign_district', 'assign_district_id', //'device_id'
-    ];
-    const USER_IMAGE = 'user/profile/image';
-
-    protected $hidden = [
-        'password', 'remember_token',
+        'name', 'image', 'email', 'password', 'ward', 'constituency', 'section',
+        'chiefdom', 'district', 'province', 'street_name', 'street_number',
+        'gender', 'is_active', 'assign_district', 'assign_district_id' //'device_id'
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    protected $hidden = ['password', 'remember_token'];
+
+    protected $casts = ['email_verified_at' => 'datetime'];
 
     public function properties()
     {

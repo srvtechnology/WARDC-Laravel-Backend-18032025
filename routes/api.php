@@ -10,10 +10,12 @@ use App\Http\Controllers\AppApi\PropertyAssesmentInsertYearly;
 use App\Http\Controllers\Api\PdfGeneratorController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\RoleController;
-
+use App\Http\Controllers\AppApi\AppAuthController;
 
 
 Route::post('login',[AuthController::class,'login']);
+Route::post('/admin/forgot-password', [AuthController::class, 'sendOtp']);
+Route::post('/admin/reset-password', [AuthController::class, 'resetPassword']);
 
 Route::middleware([CheckSanctumToken::class])->group(function () {
 
@@ -79,6 +81,7 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
 
     //===================== APP ====================// 
     Route::post('/property/save',[PropertyControllerApp::class,'propertySave']);
+    Route::get('property-get',[PropertyControllerApp::class,'propertyGet']);
     Route::post('/property-assessment/save/yearly',[PropertyAssesmentInsertYearly::class,'propertyAssessmentSaveYearly']);
     Route::post('/property-assessment/update',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']);
 
@@ -195,6 +198,9 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     Route::post('change-password-api',[App\Http\Controllers\Api\ProfileController::class,'changePassword']);
     Route::post('update-profile', [App\Http\Controllers\Api\ProfileController::class, 'updateProfile']);
 
+    Route::post('change-password-for-assement-app',[App\Http\Controllers\Api\ProfileController::class,'changePasswordAssesmentApp']);
+    Route::post('update-profile-for-assement-app', [App\Http\Controllers\Api\ProfileController::class, 'updateProfileAssesmentApp']);
+
 });
 
 
@@ -306,4 +312,6 @@ Route::middleware('auth:sanctum')->get('/user-permissions', [RoleController::cla
 
 
  // =================== ALL API BELOW FOR MOBILE APP =========================== //
- 
+  Route::post('assesment-app-user-login',[AppAuthController::class,'assesment_app_user_login']);
+  Route::post('payment-app-user-login',[AppAuthController::class,'payment_app_user_login']);
+  Route::post('app-user-logout',[AppAuthController::class,'app_user_logout']);

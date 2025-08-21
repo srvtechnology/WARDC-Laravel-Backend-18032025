@@ -92,7 +92,7 @@ class PaymentController extends Controller
         }
        
         return response()->json([
-            'status' => false,
+            'status' => true,
             'property' => $property,
             'digital_address' => $digital_address,
             'paymentInQuarter' => $paymentInQuarter,
