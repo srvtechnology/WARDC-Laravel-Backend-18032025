@@ -142,6 +142,14 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     Route::post('property-use-api-insert-data',[App\Http\Controllers\Api\PropertyUseController::class,'insert']);
     Route::post('property-use-api-update-data',[App\Http\Controllers\Api\PropertyUseController::class,'update']);
 
+
+    //===================== PROPERTY-RATES ====================// 
+
+    Route::get('property-rate-api',[App\Http\Controllers\Api\PropertyUseController::class,'Rateindex']);
+    Route::post('property-rate-api-insert-data',[App\Http\Controllers\Api\PropertyUseController::class,'Rateinsert']);
+    Route::post('property-rate-api-update-data',[App\Http\Controllers\Api\PropertyUseController::class,'Rateupdate']);
+
+
     //===================== PROPERTY-ZONE ====================// 
 
     Route::get('property-zone-api',[App\Http\Controllers\Api\PropertyZoneController::class,'index']);
