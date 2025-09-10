@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\UserMain;
 use Validator;
 ini_set('memory_limit','512M');
+
+
 class AssesmentAppUserController extends Controller
 {
     public function listing()
@@ -14,7 +16,7 @@ class AssesmentAppUserController extends Controller
         $response = [];
         try {
 
-         $response['data'] = UserMain::get();
+         $response['data'] = UserMain::orderBy('id','desc')->get();
          $response['status'] = true;
          return $response;
 

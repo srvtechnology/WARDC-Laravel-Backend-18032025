@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -86,4 +87,61 @@ class AuthController extends Controller
             return Response::json($response); 
         }
      }
+
+
+
+
+
+
+    public function sendOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:admin_users,email'
+        ]);
+
+        $otp = rand(100000, 999999); // 6-digit OTP
+
+        $admin = AdminUser::where('email', $request->email)->first();
+        $upd=  AdminUser::where('email', $request->email)->update(['otp'=>$otp]);
+       
+
+        // Send OTP via email (optional)
+        Mail::raw("Your OTP code is: $otp", function ($message) use ($admin) {
+            $message->to($admin->email)->subject('Password Reset OTP');
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'OTP sent successfully to your email.'
+        ]);
+    }
+
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:admin_users,email',
+            'otp' => 'required|string',
+            'password' => 'required|string|min:6|confirmed' 
+        ]);
+
+        $admin = AdminUser::where('email', $request->email)
+                          ->where('otp', $request->otp)
+                          ->first();
+
+        if (!$admin) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid OTP or email.'
+            ], 400);
+        }
+
+        $upd= AdminUser::where('email', $request->email)->update(['otp'=>null,'password'=>Hash::make($request->password)]);
+        
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Password updated successfully.'
+        ]);
+    }
 }

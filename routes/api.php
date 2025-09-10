@@ -10,10 +10,12 @@ use App\Http\Controllers\AppApi\PropertyAssesmentInsertYearly;
 use App\Http\Controllers\Api\PdfGeneratorController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\RoleController;
-
+use App\Http\Controllers\AppApi\AppAuthController;
 
 
 Route::post('login',[AuthController::class,'login']);
+Route::post('/admin/forgot-password', [AuthController::class, 'sendOtp']);
+Route::post('/admin/reset-password', [AuthController::class, 'resetPassword']);
 
 Route::middleware([CheckSanctumToken::class])->group(function () {
 
@@ -79,6 +81,7 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
 
     //===================== APP ====================// 
     Route::post('/property/save',[PropertyControllerApp::class,'propertySave']);
+    Route::get('property-get',[PropertyControllerApp::class,'propertyGet']);
     Route::post('/property-assessment/save/yearly',[PropertyAssesmentInsertYearly::class,'propertyAssessmentSaveYearly']);
     Route::post('/property-assessment/update',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']);
 
@@ -139,6 +142,14 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     Route::post('property-use-api-insert-data',[App\Http\Controllers\Api\PropertyUseController::class,'insert']);
     Route::post('property-use-api-update-data',[App\Http\Controllers\Api\PropertyUseController::class,'update']);
 
+
+    //===================== PROPERTY-RATES ====================// 
+
+    Route::get('property-rate-api',[App\Http\Controllers\Api\PropertyUseController::class,'Rateindex']);
+    Route::post('property-rate-api-insert-data',[App\Http\Controllers\Api\PropertyUseController::class,'Rateinsert']);
+    Route::post('property-rate-api-update-data',[App\Http\Controllers\Api\PropertyUseController::class,'Rateupdate']);
+
+
     //===================== PROPERTY-ZONE ====================// 
 
     Route::get('property-zone-api',[App\Http\Controllers\Api\PropertyZoneController::class,'index']);
@@ -194,6 +205,9 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
 
     Route::post('change-password-api',[App\Http\Controllers\Api\ProfileController::class,'changePassword']);
     Route::post('update-profile', [App\Http\Controllers\Api\ProfileController::class, 'updateProfile']);
+
+    Route::post('change-password-for-assement-app',[App\Http\Controllers\Api\ProfileController::class,'changePasswordAssesmentApp']);
+    Route::post('update-profile-for-assement-app', [App\Http\Controllers\Api\ProfileController::class, 'updateProfileAssesmentApp']);
 
 });
 
@@ -294,3 +308,18 @@ Route::middleware('auth:sanctum')->get('/user-permissions', [RoleController::cla
     
         return response()->json(['message' => 'Unauthorized'], 401);
     })->middleware('auth:sanctum');
+
+
+
+
+
+
+
+
+
+
+
+ // =================== ALL API BELOW FOR MOBILE APP =========================== //
+  Route::post('assesment-app-user-login',[AppAuthController::class,'assesment_app_user_login']);
+  Route::post('payment-app-user-login',[AppAuthController::class,'payment_app_user_login']);
+  Route::post('app-user-logout',[AppAuthController::class,'app_user_logout']);

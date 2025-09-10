@@ -173,7 +173,7 @@ class PropertyAssesmentInsertYearly extends Controller
 
 
 
-// update existing propery array, due etc..
+// update existing propery array, due etc.. loop 
 public function propertyAssessmentUpdate(Request $request){
 
 

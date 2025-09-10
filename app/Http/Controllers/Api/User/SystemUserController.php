@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use App\Models\AdminUser;
 use App\Models\RoleModel;
 use App\Models\UserMain;
-use App\Models\AdminUser;
 use Validator;
 class SystemUserController extends Controller
 {
@@ -16,7 +15,7 @@ class SystemUserController extends Controller
         $response = [];
         try {
 
-         $response['data'] = AdminUser::with('role_details')->where([['id', '!=', 1]])->get();
+         $response['data'] = AdminUser::orderBy('id','desc')->with('role_details')->where([['id', '!=', 1]])->get();
          $response['status'] = true;
          return $response;
 
