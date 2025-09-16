@@ -35,6 +35,7 @@ class PropertyCategoryController extends Controller
           $validator = Validator::make($request->all(), [ 
             'label' => 'required',
             'value' => 'required',
+            'cat_id' => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -47,6 +48,7 @@ class PropertyCategoryController extends Controller
             $new = new PropertyCategory;
             $new->label = $request->label;
             $new->value = $request->value;
+            $new->cat_id = $request->cat_id;
             $new->is_active = 1;
             $new->save();
             $response['status'] = true;
@@ -72,6 +74,7 @@ class PropertyCategoryController extends Controller
           $validator = Validator::make($request->all(), [ 
             'label' => 'required',
             'value' => 'required',
+            'cat_id' => 'required',
             'id'=>'required',
             ]);
 
@@ -85,6 +88,7 @@ class PropertyCategoryController extends Controller
             PropertyCategory::where('id',$request->id)->update([
                 'label'=>$request->label,
                 'value'=>$request->value,
+                'cat_id'=>$request->cat_id,
             ]);
 
             $response['status'] = true;

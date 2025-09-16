@@ -35,6 +35,7 @@ class PropertyTypeController extends Controller
           $validator = Validator::make($request->all(), [ 
             'label' => 'required',
             'value' => 'required',
+            'cat_id' => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -48,6 +49,7 @@ class PropertyTypeController extends Controller
             $new->label = $request->label;
             $new->value = $request->value;
             $new->is_active = 1;
+            $new->cat_id = $request->cat_id;
             $new->save();
             $response['status'] = true;
             $response['message'] = 'Data inserted successfully';
@@ -73,6 +75,7 @@ class PropertyTypeController extends Controller
             'label' => 'required',
             'value' => 'required',
             'id'=>'required',
+            'cat_id' => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -85,6 +88,7 @@ class PropertyTypeController extends Controller
             PropertyType::where('id',$request->id)->update([
                 'label'=>$request->label,
                 'value'=>$request->value,
+                'cat_id'=>$request->cat_id,
             ]);
 
             $response['status'] = true;

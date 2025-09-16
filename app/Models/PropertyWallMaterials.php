@@ -11,7 +11,7 @@ class PropertyWallMaterials extends Model
     
     use LogsActivity;
     protected $fillable = [
-        'label', 'value', 'is_active'
+        'label', 'value', 'is_active','cat_id'
     ];
 
     protected $casts = [

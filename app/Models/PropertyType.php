@@ -10,7 +10,7 @@ class PropertyType extends Model
 {
     use LogsActivity;
     protected $fillable = [
-        'label', 'value',
+        'label', 'value','cat_id','is_active',
     ];
 
     protected $table = 'property_types';
