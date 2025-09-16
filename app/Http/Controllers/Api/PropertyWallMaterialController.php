@@ -35,6 +35,7 @@ class PropertyWallMaterialController extends Controller
           $validator = Validator::make($request->all(), [ 
             'label' => 'required',
             'value' => 'required',
+            'cat_id' => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -47,6 +48,7 @@ class PropertyWallMaterialController extends Controller
             $new = new PropertyWallMaterials;
             $new->label = $request->label;
             $new->value = $request->value;
+            $new->cat_id = $request->cat_id;
             $new->is_active = 1;
             $new->save();
             $response['status'] = true;
@@ -73,6 +75,7 @@ class PropertyWallMaterialController extends Controller
             'label' => 'required',
             'value' => 'required',
             'id'=>'required',
+            'cat_id'=>'required',
             ]);
 
             if ($validator->fails()) {
@@ -85,6 +88,7 @@ class PropertyWallMaterialController extends Controller
             PropertyWallMaterials::where('id',$request->id)->update([
                 'label'=>$request->label,
                 'value'=>$request->value,
+                'cat_id'=>$request->cat_id,
             ]);
 
             $response['status'] = true;

@@ -10,7 +10,7 @@ class PropertyZones extends Model
 {
     use LogsActivity;
     protected $fillable = [
-        'label', 'value', 'is_active'
+        'label', 'value', 'is_active','cat_id'
     ];
 
     protected $table = 'property_zones';
