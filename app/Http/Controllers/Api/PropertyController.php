@@ -270,6 +270,10 @@ public function index(Request $request): JsonResponse
             $query->where('is_property_inaccessible', 1);
         }
 
+         if ($request->propertyCategoryType && $request->propertyCategoryType!="all" ) {
+            $query->where('category', $request->propertyCategoryType);
+        }
+
         // Demand Draft Delivery Status Filter //done 43
         if ($request->is_draft_delivered == "0") {
             $query->whereHas('assessment', function ($q) {

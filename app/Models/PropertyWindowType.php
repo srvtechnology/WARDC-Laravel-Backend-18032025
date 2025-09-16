@@ -10,7 +10,7 @@ class PropertyWindowType extends Model
 {
     use LogsActivity;
     protected $fillable = [
-        'label', 'value',
+        'label', 'value','category'
     ];
 
     protected $table = 'property_window_types';

@@ -72,7 +72,8 @@ class Property extends Model
         'temp_street_number',
         'temp_street_numbernew',
         'requested_by',
-        'conveyance_image'
+        'conveyance_image',
+        'category',
     ];
 
     protected $casts = [

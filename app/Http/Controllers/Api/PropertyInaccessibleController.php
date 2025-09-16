@@ -34,6 +34,7 @@ class PropertyInaccessibleController extends Controller
 
           $validator = Validator::make($request->all(), [ 
             'label' => 'required',
+             'category' => 'required',
              ]);
 
             if ($validator->fails()) {
@@ -46,6 +47,7 @@ class PropertyInaccessibleController extends Controller
             $new = new PropertyInaccessible;
             $new->label = $request->label;
             $new->is_active = 1;
+            $new->category = $request->category;
             $new->save();
             $response['status'] = true;
             $response['message'] = 'Data inserted successfully';
@@ -70,6 +72,7 @@ class PropertyInaccessibleController extends Controller
           $validator = Validator::make($request->all(), [ 
             'label' => 'required',
             'id'=>'required',
+             'category' => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -81,6 +84,7 @@ class PropertyInaccessibleController extends Controller
 
             PropertyInaccessible::where('id',$request->id)->update([
                 'label'=>$request->label,
+                'category'=>$request->category,
             ]);
 
             $response['status'] = true;

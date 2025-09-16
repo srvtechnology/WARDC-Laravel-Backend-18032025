@@ -37,6 +37,7 @@ class CouncilAdjustmentController extends Controller
             'type' => 'required',
             'sign' => 'required',
             'percentage' => 'required',
+             'category' => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -51,6 +52,7 @@ class CouncilAdjustmentController extends Controller
             $new->type = $request->type;
             $new->sign = $request->sign;
             $new->percentage = $request->percentage;
+            $new->category = $request->category;
             $new->save();
             $response['status'] = true;
             $response['message'] = 'Data inserted successfully';
@@ -78,6 +80,7 @@ class CouncilAdjustmentController extends Controller
             'sign' => 'required',
             'percentage' => 'required',
             'id' => 'required',
+             'category' => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -92,6 +95,7 @@ class CouncilAdjustmentController extends Controller
                 'type'=>$request->type,
                 'sign'=>$request->sign,
                 'percentage'=>$request->percentage,
+                'category'=>$request->category,
             ]);
 
             $response['status'] = true;

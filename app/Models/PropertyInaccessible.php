@@ -10,7 +10,7 @@ class PropertyInaccessible extends Model
 {
     // use LogsActivity;
     protected $fillable = [
-        'label', 'value', 'is_active'
+        'label', 'value', 'is_active','category'
     ];
     protected static $logAttributes = ['*'];
     protected static $logOnlyDirty = true;

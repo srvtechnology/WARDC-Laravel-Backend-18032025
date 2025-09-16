@@ -41,6 +41,7 @@ class PropertyWindowTypeController extends Controller
             'good_value' => 'required',
             'value' => 'required',
             'bad_value' => 'required',
+             'category' => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -59,6 +60,7 @@ class PropertyWindowTypeController extends Controller
             $new->value = $request->value;
             $new->bad_value = $request->bad_value;
             $new->is_active = 1;
+            $new->category = $request->category;
             $new->save();
             $response['status'] = true;
             $response['message'] = 'Data inserted successfully';
@@ -88,6 +90,7 @@ class PropertyWindowTypeController extends Controller
             'value' => 'required',
             'bad_value' => 'required',
             'id'=>'required',
+             'category' => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -105,6 +108,7 @@ class PropertyWindowTypeController extends Controller
                 'good_value'=>$request->good_value,
                 'value'=>$request->value,
                 'bad_value'=>$request->bad_value,
+                 'category'=>$request->category,
             ]);
 
             $response['status'] = true;

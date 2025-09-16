@@ -64,6 +64,7 @@ use App\Models\Property_property_category;
 use App\Models\Property_property_type;
 use App\Models\Property_property_value_added;
 use App\Models\Property_property_inaccessibles;
+use App\Models\PropertyRates;
 ini_set('memory_limit','512M');
 
 class PropertyControllerApp extends Controller
@@ -114,6 +115,7 @@ class PropertyControllerApp extends Controller
 					    'user_id' => $user->id,
 					]);
 
+        $property->category = @$request->categoryType;
 		$property->assessment_area = @$request->assessment_area;
 		$property->street_number = @$request->property_street_number;
 		$property->street_numbernew = @$request->property_street_numbernew;
@@ -1024,8 +1026,17 @@ class PropertyControllerApp extends Controller
 
   public function calculateNewRate($request)
     {
+    	$categoryType=$request->categoryType;
+    	$rate_square_meter = 2750.00;
+    	$rateSqrMtr=PropertyRates::where('category',$categoryType)->first();
+    	if($rateSqrMtr){
+         $rate_square_meter = round((float) $rateSqrMtr->value, 2);
+
+    	}
+    	// dd($rate_square_meter);
+
         $property_category = 0;
-        $rate_square_meter = 2750.00;
+        
         $wall_material = 0;
         $window_val = 0;
         $roof_material = 0;

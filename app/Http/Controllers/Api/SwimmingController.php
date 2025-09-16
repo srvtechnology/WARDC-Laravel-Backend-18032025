@@ -35,6 +35,7 @@ class SwimmingController extends Controller
           $validator = Validator::make($request->all(), [ 
             'label' => 'required',
             'value' => 'required',
+            'category' => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -48,6 +49,8 @@ class SwimmingController extends Controller
             $new->label = $request->label;
             $new->value = $request->value;
             $new->is_active = 1;
+            $new->category = $request->category;
+
             $new->save();
             $response['status'] = true;
             $response['message'] = 'Data inserted successfully';
@@ -73,6 +76,7 @@ class SwimmingController extends Controller
             'label' => 'required',
             'value' => 'required',
             'id'=>'required',
+            'category' => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -85,6 +89,7 @@ class SwimmingController extends Controller
             Swimming::where('id',$request->id)->update([
                 'label'=>$request->label,
                 'value'=>$request->value,
+                'category'=>$request->category,
             ]);
 
             $response['status'] = true;
