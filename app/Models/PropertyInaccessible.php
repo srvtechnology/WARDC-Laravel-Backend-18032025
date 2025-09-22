@@ -8,9 +8,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 class PropertyInaccessible extends Model
 {
-    // use LogsActivity;
+    use LogsActivity;
     protected $fillable = [
-        'label', 'value', 'is_active','category'
+        'label', 'is_active','category'
     ];
     protected static $logAttributes = ['*'];
     protected static $logOnlyDirty = true;

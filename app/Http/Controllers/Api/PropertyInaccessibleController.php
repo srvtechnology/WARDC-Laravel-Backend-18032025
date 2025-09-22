@@ -15,7 +15,7 @@ class PropertyInaccessibleController extends Controller
         try {
          
          $response['status'] = true;
-         $response['data'] =  PropertyInaccessible::where('is_active',1)->get();  
+         $response['data'] =  PropertyInaccessible::where('is_active',1)->orderBy('id','desc')->get();  
          return $response;
 
         } catch (\Exception $e) {
@@ -82,9 +82,16 @@ class PropertyInaccessibleController extends Controller
                     ], 422);
             } 
 
-            PropertyInaccessible::where('id',$request->id)->update([
-                'label'=>$request->label,
-                'category'=>$request->category,
+            // PropertyInaccessible::where('id',$request->id)->update([
+            //     'label'=>$request->label,
+            //     'category'=>$request->category,
+            // ]);
+
+            $propertyInaccessible = PropertyInaccessible::findOrFail($request->id);
+
+            $propertyInaccessible->update([
+                'label'    => $request->label,
+                'category' => $request->category,
             ]);
 
             $response['status'] = true;

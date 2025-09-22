@@ -15,7 +15,7 @@ class SwimmingController extends Controller
         try {
          
          $response['status'] = true;
-         $response['data'] =  Swimming::where('is_active',1)->get();  
+         $response['data'] =  Swimming::where('is_active',1)->orderBy('id','desc')->get();  
          return $response;
 
         } catch (\Exception $e) {
@@ -86,10 +86,18 @@ class SwimmingController extends Controller
                     ], 422);
             } 
 
-            Swimming::where('id',$request->id)->update([
-                'label'=>$request->label,
-                'value'=>$request->value,
-                'category'=>$request->category,
+            // Swimming::where('id',$request->id)->update([
+            //     'label'=>$request->label,
+            //     'value'=>$request->value,
+            //     'category'=>$request->category,
+            // ]);
+
+            $swimming = Swimming::findOrFail($request->id);
+
+            $swimming->update([
+                'label'    => $request->label,
+                'value'    => $request->value,
+                'category' => $request->category,
             ]);
 
             $response['status'] = true;

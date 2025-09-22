@@ -17,7 +17,7 @@ class PropertyUseController extends Controller
         try {
          
          $response['status'] = true;
-         $response['data'] =  PropertyUse::where('is_active',1)->get();  
+         $response['data'] =  PropertyUse::where('is_active',1)->orderBy('id','desc')->get();  
          return $response;
 
         } catch (\Exception $e) {
@@ -87,10 +87,18 @@ class PropertyUseController extends Controller
                     ], 422);
             } 
 
-            PropertyUse::where('id',$request->id)->update([
-                'label'=>$request->label,
-                'value'=>$request->value,
-                'cat_id'=>$request->cat_id,
+            // PropertyUse::where('id',$request->id)->update([
+            //     'label'=>$request->label,
+            //     'value'=>$request->value,
+            //     'cat_id'=>$request->cat_id,
+            // ]);
+
+            $propertyUse = PropertyUse::findOrFail($request->id);
+
+            $propertyUse->update([
+                'label' => $request->label,
+                'value' => $request->value,
+                'cat_id' => $request->cat_id,
             ]);
 
             $response['status'] = true;
@@ -123,7 +131,7 @@ class PropertyUseController extends Controller
         try {
          
          $response['status'] = true;
-         $response['data'] =  PropertyRates::get();  
+         $response['data'] =  PropertyRates::orderBy('id','desc')->get();  
          return $response;
 
         } catch (\Exception $e) {
@@ -193,10 +201,18 @@ class PropertyUseController extends Controller
                     ], 422);
             } 
 
-            PropertyRates::where('id',$request->id)->update([
-                'label'=>$request->label,
-                'value'=>$request->value,
-                'category'=>$request->category,
+            // PropertyRates::where('id',$request->id)->update([
+            //     'label'=>$request->label,
+            //     'value'=>$request->value,
+            //     'category'=>$request->category,
+            // ]);
+
+            $propertyRate = PropertyRates::findOrFail($request->id);
+
+            $propertyRate->update([
+                'label'    => $request->label,
+                'value'    => $request->value,
+                'category' => $request->category,
             ]);
 
             $response['status'] = true;

@@ -15,7 +15,7 @@ class PropertyValueAddController extends Controller
         try {
          
          $response['status'] = true;
-         $response['data'] =  PropertyValueAdded::where('is_active',1)->get();  
+         $response['data'] =  PropertyValueAdded::where('is_active',1)->orderBy('id','desc')->get();  
          return $response;
 
         } catch (\Exception $e) {
@@ -85,10 +85,18 @@ class PropertyValueAddController extends Controller
                     ], 422);
             } 
 
-            PropertyValueAdded::where('id',$request->id)->update([
-                'label'=>$request->label,
-                'value'=>$request->value,
-                'category'=>$request->category,
+            // PropertyValueAdded::where('id',$request->id)->update([
+            //     'label'=>$request->label,
+            //     'value'=>$request->value,
+            //     'category'=>$request->category,
+            // ]);
+
+            $propertyValueAdded = PropertyValueAdded::findOrFail($request->id);
+
+            $propertyValueAdded->update([
+                'label'    => $request->label,
+                'value'    => $request->value,
+                'category' => $request->category,
             ]);
 
             $response['status'] = true;

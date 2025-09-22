@@ -1502,9 +1502,18 @@ public function updateAssessment(Request $request)
 
   public function calculateNewRate($request)
     {
+        $propertyDetails = Property::find($request->property_id);
+        $categoryType=$propertyDetails->category;
+        $rate_square_meter = 2750.00;
+        $rateSqrMtr=PropertyRates::where('category',$categoryType)->first();
+        if($rateSqrMtr){
+         $rate_square_meter = round((float) $rateSqrMtr->value, 2);
+
+        }
+
         $assessmentDetails=PropertyAssessmentDetail::find($request->assessment_id);
         $property_category = 0;
-        $rate_square_meter = 2750.00;
+        // $rate_square_meter = 2750.00;
         $wall_material = 0;
         $window_val = 0;
         $roof_material = 0;

@@ -15,7 +15,7 @@ class PropertyZoneController extends Controller
         try {
          
          $response['status'] = true;
-         $response['data'] =  PropertyZones::where('is_active',1)->get();  
+         $response['data'] =  PropertyZones::where('is_active',1)->orderBy('id','desc')->get();  
          return $response;
 
         } catch (\Exception $e) {
@@ -85,10 +85,18 @@ class PropertyZoneController extends Controller
                     ], 422);
             } 
 
-            PropertyZones::where('id',$request->id)->update([
-                'label'=>$request->label,
-                'value'=>$request->value,
-                'cat_id'=>$request->cat_id,
+            // PropertyZones::where('id',$request->id)->update([
+            //     'label'=>$request->label,
+            //     'value'=>$request->value,
+            //     'cat_id'=>$request->cat_id,
+            // ]);
+
+            $propertyZone = PropertyZones::findOrFail($request->id);
+
+            $propertyZone->update([
+                'label'  => $request->label,
+                'value'  => $request->value,
+                'cat_id' => $request->cat_id,
             ]);
 
             $response['status'] = true;

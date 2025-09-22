@@ -15,7 +15,7 @@ class PropertyWallMaterialController extends Controller
         try {
          
          $response['status'] = true;
-         $response['data'] =  PropertyWallMaterials::where('is_active',1)->get();  
+         $response['data'] =  PropertyWallMaterials::where('is_active',1)->orderBy('id','desc')->get();  
          return $response;
 
         } catch (\Exception $e) {
@@ -85,10 +85,18 @@ class PropertyWallMaterialController extends Controller
                     ], 422);
             } 
 
-            PropertyWallMaterials::where('id',$request->id)->update([
-                'label'=>$request->label,
-                'value'=>$request->value,
-                'cat_id'=>$request->cat_id,
+            // PropertyWallMaterials::where('id',$request->id)->update([
+            //     'label'=>$request->label,
+            //     'value'=>$request->value,
+            //     'cat_id'=>$request->cat_id,
+            // ]);
+
+            $wallMaterial = PropertyWallMaterials::findOrFail($request->id);
+
+            $wallMaterial->update([
+                'label' => $request->label,
+                'value' => $request->value,
+                'cat_id' => $request->cat_id,
             ]);
 
             $response['status'] = true;

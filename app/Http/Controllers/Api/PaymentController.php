@@ -170,7 +170,7 @@ class PaymentController extends Controller
             $insPa->save();
         }
 
-        //update sue to assesment tbale
+        //update due to assesment tbale
         $updateAssesment=PropertyAssessmentDetail::where('id',$request->assessment_id)->where('property_id',$request->property_id)->update(['due'=>$assesmentDetails->due - $ins->total]);
 
        return response()->json([

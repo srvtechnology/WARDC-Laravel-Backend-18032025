@@ -83,7 +83,7 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     Route::post('/property/save',[PropertyControllerApp::class,'propertySave']);
     Route::get('property-get',[PropertyControllerApp::class,'propertyGet']);
     Route::post('/property-assessment/save/yearly',[PropertyAssesmentInsertYearly::class,'propertyAssessmentSaveYearly']);
-    Route::post('/property-assessment/update',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']);
+    Route::post('/property-assessment/update',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']); //not req. below have same req url
 
     //===================== PROPERTY-CATEGORY ====================// 
 
@@ -311,6 +311,7 @@ Route::middleware('auth:sanctum')->get('/user-permissions', [RoleController::cla
 
 
 
+Route::get('/property-assessment-update-new', [PropertyAssesmentInsertYearly::class, 'propertyAssessmentUpdateNew']);
 
 
 

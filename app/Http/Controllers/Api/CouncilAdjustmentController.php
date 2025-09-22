@@ -15,7 +15,7 @@ class CouncilAdjustmentController extends Controller
         try {
          
          $response['status'] = true;
-         $response['data'] =  CounsilAdjustmentGroupA::get();  
+         $response['data'] =  CounsilAdjustmentGroupA::orderBy('id','desc')->get();  
          return $response;
 
         } catch (\Exception $e) {
@@ -90,12 +90,21 @@ class CouncilAdjustmentController extends Controller
                 ], 422);
             }  
 
-            CounsilAdjustmentGroupA::where('id',$request->id)->update([
-                'name'=>$request->name,
-                'type'=>$request->type,
-                'sign'=>$request->sign,
-                'percentage'=>$request->percentage,
-                'category'=>$request->category,
+            // CounsilAdjustmentGroupA::where('id',$request->id)->update([
+            //     'name'=>$request->name,
+            //     'type'=>$request->type,
+            //     'sign'=>$request->sign,
+            //     'percentage'=>$request->percentage,
+            //     'category'=>$request->category,
+            // ]);
+
+            $councilAdjustment = CounsilAdjustmentGroupA::findOrFail($request->id);
+
+            $councilAdjustment->update([
+                'name'       => $request->name,
+                'type'       => $request->type,
+                'sign'       => $request->sign,
+                'percentage' => $request->percentage,
             ]);
 
             $response['status'] = true;

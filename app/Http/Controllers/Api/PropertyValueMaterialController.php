@@ -15,7 +15,7 @@ class PropertyValueMaterialController extends Controller
         try {
          
          $response['status'] = true;
-         $response['data'] =  PropertyRoofsMaterials::where('is_active',1)->get();  
+         $response['data'] =  PropertyRoofsMaterials::where('is_active',1)->orderBy('id','desc')->get();  
          return $response;
 
         } catch (\Exception $e) {
@@ -85,11 +85,20 @@ class PropertyValueMaterialController extends Controller
                     ], 422);
             } 
 
-            PropertyRoofsMaterials::where('id',$request->id)->update([
-                'label'=>$request->label,
-                'value'=>$request->value,
-                'cat_id'=>$request->cat_id,
+            // PropertyRoofsMaterials::where('id',$request->id)->update([
+            //     'label'=>$request->label,
+            //     'value'=>$request->value,
+            //     'cat_id'=>$request->cat_id,
+            // ]);
+
+            $roofMaterial = PropertyRoofsMaterials::findOrFail($request->id);
+
+            $roofMaterial->update([
+                'label' => $request->label,
+                'value' => $request->value,
+                'cat_id' => $request->cat_id,
             ]);
+
 
             $response['status'] = true;
             $response['message'] = 'Data updated successfully';

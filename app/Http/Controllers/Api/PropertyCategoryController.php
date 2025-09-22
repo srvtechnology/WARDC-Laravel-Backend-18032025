@@ -15,7 +15,7 @@ class PropertyCategoryController extends Controller
         try {
          
          $response['status'] = true;
-         $response['data'] =  PropertyCategory::where('is_active',1)->get();  
+         $response['data'] =  PropertyCategory::where('is_active',1)->orderBy('id','desc')->get();  
          return $response;
 
         } catch (\Exception $e) {
@@ -85,10 +85,18 @@ class PropertyCategoryController extends Controller
                     ], 422);
             } 
 
-            PropertyCategory::where('id',$request->id)->update([
-                'label'=>$request->label,
-                'value'=>$request->value,
-                'cat_id'=>$request->cat_id,
+            // PropertyCategory::where('id',$request->id)->update([
+            //     'label'=>$request->label,
+            //     'value'=>$request->value,
+            //     'cat_id'=>$request->cat_id,
+            // ]);
+
+            $propertyCategory = PropertyCategory::findOrFail($request->id);
+
+            $propertyCategory->update([
+                'label' => $request->label,
+                'value' => $request->value,
+                'cat_id' => $request->cat_id,
             ]);
 
             $response['status'] = true;

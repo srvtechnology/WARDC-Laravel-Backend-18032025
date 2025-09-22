@@ -15,7 +15,7 @@ class PropertyTypeController extends Controller
         try {
          
          $response['status'] = true;
-         $response['data'] =  PropertyType::where('is_active',1)->get();  
+         $response['data'] =  PropertyType::where('is_active',1)->orderBy('id','desc')->get();  
          return $response;
 
         } catch (\Exception $e) {
@@ -85,11 +85,20 @@ class PropertyTypeController extends Controller
                     ], 422);
             } 
 
-            PropertyType::where('id',$request->id)->update([
-                'label'=>$request->label,
-                'value'=>$request->value,
-                'cat_id'=>$request->cat_id,
+            // PropertyType::where('id',$request->id)->update([
+            //     'label'=>$request->label,
+            //     'value'=>$request->value,
+            //     'cat_id'=>$request->cat_id,
+            // ]);
+
+            $propertyType = PropertyType::findOrFail($request->id);
+
+            $propertyType->update([
+                'label' => $request->label,
+                'value' => $request->value,
+                'cat_id' => $request->cat_id,
             ]);
+
 
             $response['status'] = true;
             $response['message'] = 'Data updated successfully';

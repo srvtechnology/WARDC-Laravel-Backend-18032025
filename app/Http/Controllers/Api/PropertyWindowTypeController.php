@@ -15,7 +15,7 @@ class PropertyWindowTypeController extends Controller
         try {
          
          $response['status'] = true;
-         $response['data'] =  PropertyWindowType::where('is_active',1)->get();  
+         $response['data'] =  PropertyWindowType::where('is_active',1)->orderBy('id','desc')->get();  
          return $response;
 
         } catch (\Exception $e) {
@@ -100,15 +100,28 @@ class PropertyWindowTypeController extends Controller
                     ], 422);
             } 
 
-            PropertyWindowType::where('id',$request->id)->update([
-                'label'=>$request->label,
-                'good_percent'=>$request->good_percent,
-                'average_precent'=>$request->average_precent,
-                'bad_percent'=>$request->bad_percent,
-                'good_value'=>$request->good_value,
-                'value'=>$request->value,
-                'bad_value'=>$request->bad_value,
-                 'category'=>$request->category,
+            // PropertyWindowType::where('id',$request->id)->update([
+            //     'label'=>$request->label,
+            //     'good_percent'=>$request->good_percent,
+            //     'average_precent'=>$request->average_precent,
+            //     'bad_percent'=>$request->bad_percent,
+            //     'good_value'=>$request->good_value,
+            //     'value'=>$request->value,
+            //     'bad_value'=>$request->bad_value,
+            //      'category'=>$request->category,
+            // ]);
+
+            $windowType = PropertyWindowType::findOrFail($request->id);
+
+            $windowType->update([
+                'label'           => $request->label,
+                'good_percent'    => $request->good_percent,
+                'average_precent' => $request->average_precent,
+                'bad_percent'     => $request->bad_percent,
+                'good_value'      => $request->good_value,
+                'value'           => $request->value,
+                'bad_value'       => $request->bad_value,
+                'category'        => $request->category,
             ]);
 
             $response['status'] = true;
