@@ -62,6 +62,7 @@ use App\Models\Property_occupancies;
 use App\Models\Property_property_category;
 use App\Models\Property_property_type;
 use App\Models\Property_property_value_added;
+use App\Models\PropertyRates;
 
 ini_set('memory_limit','512M');
 
@@ -805,7 +806,7 @@ public function propertyDetails(Request $request){
 
             $payment = PropertyPayment::where('property_id', $request->property_id)
                 ->whereYear('created_at', $year)
-                ->value('total'); 
+                ->sum('total'); 
 
             $allAssesments[$key]['paymentAmount'] = $payment ?? 0;
         }
@@ -963,6 +964,9 @@ public function updateLandlord(Request $request)
             'district' => $request->district,
             'province' => $request->province,
             'postcode' => $request->postcode,
+            'email'=>@$request->email,
+            'id_number'=>@$request->id_number,
+            'id_type'=>@$request->id_type,
         ];
 
         if (!$isOrganization) {
@@ -1283,8 +1287,22 @@ public function updateAssessment(Request $request)
         $assessment->no_of_mast=$request->no_of_mast;
         $assessment->no_of_compound_house=$request->no_of_compound_house;
         $assessment->compound_name=$request->compound_name;
-        $assessment->arrear_calc=$request->arrear_calc;
-        $assessment->due=$request->due;
+        $assessment->arrear_calc=$request->arrear_calc?$request->arrear_calc:$assessment->arrear_calc;
+        // $assessment->due=$request->due; // while update due will be chnage as per new assesmt value
+        
+       $paymentAmount = PropertyPayment::where('property_id', $request->property_id)
+                ->whereYear('created_at', $assessment->created_at->year)
+                ->sum('total');
+
+        $arrear =$request->arrear_calc?  (float)$request->arrear_calc:  (float)$assessment->arrear_calc;;
+        $rateWithoutGST = (float) ($rate['rateWithoutGST'] ?? 0);
+
+        $assessment->due = $request->due ? $request->due :  round(
+            max(0, $rateWithoutGST + $arrear + ($arrear * 0.25) - $paymentAmount),
+            2
+        );
+
+         $assessment->penalty=$request->arrear_calc?$request->arrear_calc * 0.25 : $assessment->arrear_calc *0.25;
 
 
         // $assessment->property_rate_without_gst=$request->property_rate_without_gst;

@@ -115,16 +115,29 @@ class SystemUserController extends Controller
                 ], 422);
             }
 
-            // Find and update user
-            AdminUser::where('id',$request->id)->update([
-                'first_name' => $request->first_name,
-                'gender' => $request->gender,
-                'last_name' => $request->last_name,
-                'street_name' => $request->street_name,
+            // // Find and update user
+            // AdminUser::where('id',$request->id)->update([
+            //     'first_name' => $request->first_name,
+            //     'gender' => $request->gender,
+            //     'last_name' => $request->last_name,
+            //     'street_name' => $request->street_name,
+            //     'street_number' => $request->street_number,
+            //     'role_id' => $request->role_id,
+            //     'is_active' => $request->is_active,
+            // ]);
+
+            $adminUser = AdminUser::findOrFail($request->id);
+
+            $adminUser->update([
+                'first_name'    => $request->first_name,
+                'gender'        => $request->gender,
+                'last_name'     => $request->last_name,
+                'street_name'   => $request->street_name,
                 'street_number' => $request->street_number,
-                'role_id' => $request->role_id,
-                'is_active' => $request->is_active,
+                'role_id'       => $request->role_id,
+                'is_active'     => $request->is_active,
             ]);
+
 
             return response()->json([
                 'status' => true,

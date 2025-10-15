@@ -324,3 +324,4 @@ Route::get('/property-assessment-update-new', [PropertyAssesmentInsertYearly::cl
   Route::post('assesment-app-user-login',[AppAuthController::class,'assesment_app_user_login']);
   Route::post('payment-app-user-login',[AppAuthController::class,'payment_app_user_login']);
   Route::post('app-user-logout',[AppAuthController::class,'app_user_logout']);
+  Route::get('get-all-variable-datas',[PropertyControllerApp::class,'get_all_variable_datas']);

@@ -369,10 +369,10 @@ class PropertyControllerApp extends Controller
 			$assessmentModel->property_wall_materials        = $request->assessment_wall_materials_id;
 			$assessmentModel->roofs_materials                = $request->assessment_roofs_materials_id;
 			$assessmentModel->property_window_type           = $request->assessment_window_type_id;
-			$assessmentModel->property_dimension             = $request->assessment_dimension_id;
+			$assessmentModel->property_dimension             = @$request->assessment_dimension_id;
 			$assessmentModel->length                         = $request->assessment_length;
 			$assessmentModel->breadth                        = $request->assessment_breadth;
-			$assessmentModel->square_meter                   = $request->assessment_square_meter;
+			$assessmentModel->square_meter                   = $request->assessment_length * $request->assessment_breadth;
 
 			$assessmentModel->property_rate_without_gst      = $request->assessmentRateWithoutGST > 0 ? $request->assessmentRateWithoutGST : $rate['rateWithoutGST'];
 			$assessmentModel->property_gst                   = $request->assessmentRateWithGST > 0 ? $request->assessmentRateWithGST : $rate['GST'];
@@ -1281,8 +1281,47 @@ public function propertyGet(){
 	    'data' => $property
 	], 200);
 }
-	
-    
+
+
+
+
+
+
+
+
+public function get_all_variable_datas(){
+
+        try {
+            $data = [
+                'property_categories'       => PropertyCategory::all(),
+                'property_types'            => PropertyType::all(),
+                'property_roofs_materials'  => PropertyRoofsMaterials::all(),
+                'property_wall_materials'   => PropertyWallMaterials::all(),
+                'property_uses'             => PropertyUse::all(),
+                'property_rates'            => PropertyRates::all(),
+                'property_zones'            => PropertyZones::all(),
+                'swimmings'                 => Swimming::all(),
+                'property_window_types'     => PropertyWindowType::all(),
+                'property_value_added'      => PropertyValueAdded::all(),
+                'council_adjustments'       => CounsilAdjustmentGroupA::all(),
+                'property_inaccessibles'    => PropertyInaccessible::all(),
+               
+            ];
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Data fetched successfully',
+                'data' => $data
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while fetching data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
 

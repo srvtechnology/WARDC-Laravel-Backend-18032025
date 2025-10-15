@@ -153,7 +153,8 @@ public function propertyAssessmentSaveYearlyOld(Request $request){
 	    $lastYearDue=$find->due!=null? $find->due: $find->property_rate_without_gst;
 	    $ins->arrear_calc = $lastYearDue;
 	    $ins->penalty =  round($lastYearDue * 0.25, 2);
-	    $ins->due = round(max(0, $lastYearDue + round($lastYearDue * 0.25, 2)  - 0), 2); // as amount paid in 1 day will be 0
+	    // $ins->due = round(max(0, $lastYearDue + round($lastYearDue * 0.25, 2)  - 0), 2); // as amount paid in 1 day will be 0
+          $ins->due = round(max(0, $lastYearDue +(int)$find->property_rate_without_gst+ round($lastYearDue * 0.25, 2)  - 0), 2); 
 	    $ins->text_val = $find->text_val;
 
 	    $ins->save();
@@ -258,7 +259,7 @@ public function propertyAssessmentSaveYearly()
             $lastYearDue = $find->due !== null ? $find->due : $find->property_rate_without_gst;
             $ins->arrear_calc = $lastYearDue;
             $ins->penalty = round($lastYearDue * 0.25, 2);
-            $ins->due = round(max(0, $lastYearDue + round($lastYearDue * 0.25, 2) - 0), 2);
+             $ins->due = round(max(0, $lastYearDue +(int)$find->property_rate_without_gst+ round($lastYearDue * 0.25, 2)  - 0), 2); 
             $ins->text_val = $find->text_val;
 
             $ins->save();
@@ -370,7 +371,7 @@ public function propertyAssessmentUpdate(Request $request){
 	        // From second year onward
 	        $arrears = $previousDue;
 	        $penalty = round($arrears * 0.25, 2); // 0.25%
-	        $due = round($arrears + $penalty - $amountPaid, 2);
+	        $due = round($rate + $arrears + $penalty - $amountPaid, 2);  // +rate hobe
 	    }
 
 	    // Set calculated values
@@ -442,7 +443,7 @@ public function propertyAssessmentUpdateNew(Request $request)
                 } else {
                     $arrears = $previousDue;
                     $penalty = round($arrears * 0.25, 2); // 0.25%
-                    $due     = round($arrears + $penalty - $amountPaid, 2);
+                    $due     = round($rate + $arrears + $penalty - $amountPaid, 2);
                 }
 
                 $row->arrear_calc = $index === 0 ? 0 : $arrears;

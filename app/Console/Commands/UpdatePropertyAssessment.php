@@ -7,6 +7,7 @@ use App\Models\Property;
 use App\Models\PropertyAssessmentDetail;
 use App\Models\PropertyPayment;
 use Carbon\Carbon;
+use Log;
 
 class UpdatePropertyAssessment extends Command
 {
@@ -61,7 +62,7 @@ class UpdatePropertyAssessment extends Command
                     } else {
                         $arrears = $previousDue;
                         $penalty = round($arrears * 0.25, 2);
-                        $due     = round($arrears + $penalty - $amountPaid, 2);
+                        $due     = round($rate + $arrears + $penalty - $amountPaid, 2);
                     }
 
                     $row->arrear_calc = $index === 0 ? 0 : $arrears;

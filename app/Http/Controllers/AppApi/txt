@@ -1,0 +1,156 @@
+step 1:
+landlord data
+
+payload
+"is_organization": "0",
+organization_addresss: "l"
+organization_name: "j"
+organization_type: "k"
+"landlord_ownerTitle_id": "1",
+"landlord_first_name": "Santigie",
+"landlord_middle_name": "Michael",
+"landlord_surname": "Kargbo",
+"landlord_email":"avc@gmail.com",
+"landlord_id_number": "77iliy",
+"landlord_id_type": "kjgg",
+"landlord_sex": "m",
+"landlord_street_number": "51",
+"landlord_street_name": "Main Peninsula Road Russell",
+"landlord_ward": "374",
+"landlord_constituency": "105",
+"landlord_section": "Sattia Tombo",
+"landlord_chiefdom": "York Rural",
+"landlord_district": "Western Area Rural District",
+"landlord_province": "Western Area",
+"landlord_postcode": "WAR374",
+"landlord_mobile_1": "+23277567711",
+"landlord_mobile_2": "+23276605392",
+
+=====================================================================
+
+
+
+step 2:
+property data
+
+payload
+categoryType: R OR C.
+"property_street_number": "51",
+"property_street_numbernew": "51",
+"property_street_name": "Main Peninsula Road Russell",
+"property_ward": "374",
+"property_constituency": "105",
+"property_section": "Sattia Tombo new j",
+"property_chiefdom": "York Rural",
+"property_district": "Western Area Rural District",
+"property_province": "Western Area",
+"property_postcode": "WAR374",
+"is_draft_delivered": "0",   0 MEANS NO 1 MEANS YES
+delivered_name:jkl
+delivered_number:778
+delivered_image:(binary)
+"property_inaccessable": [
+        "1",
+        "2"
+    ],
+
+
+=====================================================================
+
+STEP 3:
+Occupency data
+
+
+payload
+
+"occupancy_type": [
+    "Owned Tenancy",
+    "Rented House"
+],
+"occupancy_tenant_first_name": "Santigie",
+"occupancy_middle_name": "Michael",
+"occupancy_surname": "Kargbo",
+"occupancy_mobile_1": "+23277567711",
+"occupancy_mobile_2": "+23276605392",
+"tenant_ownerTitle_id": "1", //mr,ms
+
+=======================================================================
+
+
+
+
+
+step 4:
+Geo Registry Points datas
+
+payload:
+
+"registry_point1": "8.237550256892234,-13.085966873914003",
+"registry_point2": "8.237550256892234,-13.085966873914003",
+"registry_point3": "8.237550256892234,-13.085966873914003",
+"registry_point4": "8.237550256892234,-13.085966873914003",
+"registry_point5": "8.237550256892234,-13.085966873914003",
+"registry_point6": "8.237550256892234,-13.085966873914003",
+"registry_point7": "8.237550256892234,-13.085966873914003",
+"registry_point8": "8.237550256892234,-13.085966873914003",
+"registry_digital_address": "WAR374 8.2376 -13.0860",
+"dor_lat_long": "8.237550256892234,-13.085966873914003",
+
+
+registry[0][meter_number]: MTR-123
+registry[0][meter_image]: (file upload)
+
+registry[1][meter_number]: MTR-456
+registry[1][meter_image]: (file upload)
+
+
+
+===========================================================================
+
+
+
+step 5:
+Property assessment datas
+
+payload:
+
+  "assessment_categories_id": [
+        "5","7","8"
+    ],
+
+  "property_types": [
+        "1","2", "3"
+    ],
+
+    "assessment_wall_materials_id": "2",
+    "assessment_roofs_materials_id": "3",
+     "assessment_window_type_id":"1",
+    "assessment_length": "12.2",
+    "assessment_breadth": "9.7",
+
+     "assessment_value_added_id": [
+        "5",
+        "8",
+        "9",
+        "14",
+        "15"
+    ],
+
+    "assessment_use_id": "21",
+    "assessment_zone_id": "1",
+    "swimming_pool":1,
+     "gated_community": "0",
+      "total_shops":1, //optional
+    "total_mast":1, //optional
+    "total_compound_house":"2",
+    "compound_name": "test",
+
+
+    "randomdata": "5452278", //any random id
+    "group_name": "A", //a always
+    "ownerTitle": "1",
+    assessment_images_1:binary formdata
+    assessment_images_2: binary form data
+
+
+     "newAdjustmentIds": "[{\"id\":2,\"name\":\"street quality\",\"type\":\"average\",\"sign\":\"+\",\"percentage\":0,\"created_at\":\"2023-01-02 13:30:00\",\"updated_at\":\"2013-12-31 07:02:16\"},{\"id\":5,\"name\":\"wall quality\",\"type\":\"average\",\"sign\":\"+\",\"percentage\":0,\"created_at\":\"2023-12-11 07:02:30\",\"updated_at\":\"2023-12-10 13:30:00\"},{\"id\":8,\"name\":\"roof condition\",\"type\":\"average\",\"sign\":\"+\",\"percentage\":0,\"created_at\":\"2023-12-11 07:02:30\",\"updated_at\":\"2023-12-10 13:30:00\"},{\"id\":12,\"name\":\"number of lanes\",\"type\":\"two\",\"sign\":\"-\",\"percentage\":1,\"created_at\":\"2023-12-11 07:02:30\",\"updated_at\":\"2023-12-10 13:30:00\"},{\"id\":15,\"name\":\"wall material\",\"type\":\"mid value\",\"sign\":\"-\",\"percentage\":28,\"created_at\":\"2023-12-11 07:02:30\",\"updated_at\":\"2023-12-10 13:30:00\"},{\"id\":18,\"name\":\"roof material\",\"type\":\"mid value\",\"sign\":\"+\",\"percentage\":0,\"created_at\":\"2023-12-11 07:02:30\",\"updated_at\":\"2023-12-10 13:30:00\"},{\"id\":21,\"name\":\"window\",\"type\":\"mid value\",\"sign\":\"+\",\"percentage\":0,\"created_at\":\"2023-12-11 07:02:30\",\"updated_at\":\"2023-12-10 13:30:00\"},{\"id\":31,\"name\":\"verenda\",\"type\":\"property\",\"sign\":\"+\",\"percentage\":3,\"created_at\":\"2023-12-11 07:02:30\",\"updated_at\":\"2023-12-10 13:30:00\"},{\"id\":32,\"name\":\"potential to build\",\"type\":\"property\",\"sign\":\"+\",\"percentage\":0,\"created_at\":\"2023-12-11 07:02:30\",\"updated_at\":\"2023-12-10 13:30:00\"}]",

@@ -134,24 +134,60 @@ class PropertyCategoryController extends Controller
         }
     }
 
-    public function delete($id)
-    {
-        $response = [];
-        try {
+    // public function delete($id)
+    // {
+    //     $response = [];
+    //     try {
+
+    //     $response['status'] = true;
+    //     $response['data'] = PropertyCategory::where('id',$id)->update(['is_active'=>0]);
+    //     $response['message'] = 'Data deleted successfully';
+    //     return $response;
+
+
+    //     }catch (\Exception $e) {
+    //     return response()->json([
+    //         'status' => false,
+    //         'message' => 'An error occurred',
+    //         'error' => $e->getMessage()
+    //     ], 500);
+    //     }
+    // }
+
+
+public function delete($id)
+{
+    $response = [];
+    try {
+        $property = PropertyCategory::findOrFail($id);
+
+        // Soft delete (set is_active = 0)
+        $property->update(['is_active' => 0]);
+
+        // Log as delete (manual entry in your audit/log system)
+        activity()
+            ->performedOn($property)
+            ->causedBy(auth()->user())
+            ->event('deleted')   // force log as "deleted"
+            ->withProperties([
+                'attributes' => $property->toArray(),
+            ])
+            ->log('Property Category soft deleted (is_active=0)');
 
         $response['status'] = true;
-        $response['data'] = PropertyCategory::where('id',$id)->update(['is_active'=>0]);
+        $response['data'] = $property;
         $response['message'] = 'Data deleted successfully';
+
         return $response;
 
-
-        }catch (\Exception $e) {
+    } catch (\Exception $e) {
         return response()->json([
             'status' => false,
             'message' => 'An error occurred',
             'error' => $e->getMessage()
         ], 500);
-        }
     }
+}
+
 
 }

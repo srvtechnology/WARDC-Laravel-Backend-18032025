@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class AdminUser extends Authenticatable
 {
-    use HasApiTokens;
+    use HasApiTokens, LogsActivity;
 
     protected $table = 'admin_users';
 
@@ -29,9 +31,19 @@ class AdminUser extends Authenticatable
         return $this->hasOne('App\Models\RoleModel','id','role_id');
     }
 
-     public function role()
+    public function role()
     {
         return $this->belongsTo(\App\Models\RoleModel::class, 'role_id');
     }
-}
 
+    /**
+     * Configure Spatie Activitylog options
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('system-user') // custom log name
+            ->logAll()                 // log all fillable attributes
+            ->logOnlyDirty();          // log only changed values
+    }
+}

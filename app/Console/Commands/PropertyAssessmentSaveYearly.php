@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use App\Models\Property;
 use App\Models\PropertyAssessmentDetail;
 use Carbon\Carbon;
+use Log;
 
 class PropertyAssessmentSaveYearly extends Command
 {
@@ -119,7 +120,7 @@ class PropertyAssessmentSaveYearly extends Command
                 $lastYearDue=$find->due!=null? $find->due: $find->property_rate_without_gst;
                 $ins->arrear_calc = $lastYearDue;
                 $ins->penalty =  round($lastYearDue * 0.25, 2);
-                $ins->due = round(max(0, $lastYearDue + round($lastYearDue * 0.25, 2)  - 0), 2); // as amount paid in 1 day will be 0
+                $ins->due = round(max(0, $lastYearDue +(int)$find->property_rate_without_gst+ round($lastYearDue * 0.25, 2)  - 0), 2); // as amount paid in 1 day will be 0
                 $ins->text_val = $find->text_val;
 
                 $ins->save();
