@@ -83,7 +83,7 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     Route::post('/property/save',[PropertyControllerApp::class,'propertySave']);
     Route::get('property-get',[PropertyControllerApp::class,'propertyGet']);
     Route::post('/property-assessment/save/yearly',[PropertyAssesmentInsertYearly::class,'propertyAssessmentSaveYearly']);
-    Route::post('/property-assessment/update',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']); //not req. below have same req url
+    // Route::get('/property-assessment/update/byid/{id}',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']); // req. for manual update single property
 
     //===================== PROPERTY-CATEGORY ====================// 
 
@@ -325,3 +325,4 @@ Route::get('/property-assessment-update-new', [PropertyAssesmentInsertYearly::cl
   Route::post('payment-app-user-login',[AppAuthController::class,'payment_app_user_login']);
   Route::post('app-user-logout',[AppAuthController::class,'app_user_logout']);
   Route::get('get-all-variable-datas',[PropertyControllerApp::class,'get_all_variable_datas']);
+ Route::get('/property-assessment/update/byid/{id}',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']); // req. for manual update single property

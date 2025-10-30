@@ -152,7 +152,8 @@ public function propertyAssessmentSaveYearlyOld(Request $request){
 
 	    $lastYearDue=$find->due!=null? $find->due: $find->property_rate_without_gst;
 	    $ins->arrear_calc = $lastYearDue;
-	    $ins->penalty =  round($lastYearDue * 0.25, 2);
+	   $ins->penalty = $lastYearDue > 0 ? round($lastYearDue * 0.25, 2) : 0;
+
 	    // $ins->due = round(max(0, $lastYearDue + round($lastYearDue * 0.25, 2)  - 0), 2); // as amount paid in 1 day will be 0
           $ins->due = round(max(0, $lastYearDue +(int)$find->property_rate_without_gst+ round($lastYearDue * 0.25, 2)  - 0), 2); 
 	    $ins->text_val = $find->text_val;
@@ -258,7 +259,8 @@ public function propertyAssessmentSaveYearly()
             // Arrears / penalty logic
             $lastYearDue = $find->due !== null ? $find->due : $find->property_rate_without_gst;
             $ins->arrear_calc = $lastYearDue;
-            $ins->penalty = round($lastYearDue * 0.25, 2);
+          $ins->penalty = $lastYearDue > 0 ? round($lastYearDue * 0.25, 2) : 0;
+
              $ins->due = round(max(0, $lastYearDue +(int)$find->property_rate_without_gst+ round($lastYearDue * 0.25, 2)  - 0), 2); 
             $ins->text_val = $find->text_val;
 
@@ -321,10 +323,10 @@ public function propertyAssessmentSaveYearly()
 
 
 // update existing propery array, due etc.. loop //not req
-public function propertyAssessmentUpdate(Request $request){
+public function propertyAssessmentUpdate(Request $request,$id){
 
 
-     $propertyId=$request->propertyId;  // need foreach loop of property
+     $propertyId=$id;  // need foreach loop of property
 
    	// Step 1: Get all assessment rows for this property
 		$assessments = PropertyAssessmentDetail::where('property_id', $propertyId)
@@ -370,7 +372,7 @@ public function propertyAssessmentUpdate(Request $request){
 	    } else {
 	        // From second year onward
 	        $arrears = $previousDue;
-	        $penalty = round($arrears * 0.25, 2); // 0.25%
+	        $penalty = $arrears > 0 ? round($arrears * 0.25, 2) : 0; // 0.25% = 0.25; // 0.25%
 	        $due = round($rate + $arrears + $penalty - $amountPaid, 2);  // +rate hobe
 	    }
 
@@ -385,6 +387,8 @@ public function propertyAssessmentUpdate(Request $request){
 	    // Update $previousDue for next loop
 	    $previousDue = $due;
 	}
+
+    echo "done";
 
 
 }
@@ -442,7 +446,7 @@ public function propertyAssessmentUpdateNew(Request $request)
                     $due     = round($rate - $amountPaid, 2);
                 } else {
                     $arrears = $previousDue;
-                    $penalty = round($arrears * 0.25, 2); // 0.25%
+                    $penalty = $arrears > 0 ? round($arrears * 0.25, 2) : 0; // 0.25%
                     $due     = round($rate + $arrears + $penalty - $amountPaid, 2);
                 }
 

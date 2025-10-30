@@ -22,7 +22,7 @@ class UpdatePropertyAssessment extends Command
     {
         ini_set('max_execution_time', 0); // no timeout
 
-        Property::chunk(50, function ($properties) {
+        Property::where('id', '>', 115400)->chunk(50, function ($properties) {
             foreach ($properties as $property) {
                 $propertyId = $property->id;
 
@@ -61,7 +61,8 @@ class UpdatePropertyAssessment extends Command
                         $due     = round($rate - $amountPaid, 2);
                     } else {
                         $arrears = $previousDue;
-                        $penalty = round($arrears * 0.25, 2);
+                        $penalty = $arrears > 0 ? round($arrears * 0.25, 2) : 0; // 0.25% = 0.25
+
                         $due     = round($rate + $arrears + $penalty - $amountPaid, 2);
                     }
 

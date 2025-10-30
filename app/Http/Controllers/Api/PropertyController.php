@@ -797,7 +797,7 @@ public function propertyDetails(Request $request){
 
 
        $allAssesments = PropertyAssessmentDetail::where('property_id', $request->property_id)
-            ->select('id','created_at','arrear_calc', 'penalty as penalty_amount','due','property_rate_without_gst','property_rate_with_gst','demand_note_recipient_photo')
+            ->select('id','created_at','arrear_calc', 'penalty as penalty_amount','due','property_rate_without_gst','property_rate_with_gst','demand_note_recipient_photo')->orderBy('created_at')
             ->get();
 
 
@@ -1302,7 +1302,10 @@ public function updateAssessment(Request $request)
             2
         );
 
-         $assessment->penalty=$request->arrear_calc?$request->arrear_calc * 0.25 : $assessment->arrear_calc *0.25;
+         // $assessment->penalty=$request->arrear_calc?$request->arrear_calc * 0.25 : $assessment->arrear_calc *0.25;
+        $arrears = $request->arrear_calc ?? $assessment->arrear_calc;
+        $assessment->penalty = $arrears > 0 ? round($arrears * 0.25, 2) : 0;
+
 
 
         // $assessment->property_rate_without_gst=$request->property_rate_without_gst;
