@@ -1305,8 +1305,17 @@ public function get_all_variable_datas(){
                 'property_value_added'      => PropertyValueAdded::all(),
                 'council_adjustments'       => CounsilAdjustmentGroupA::all(),
                 'property_inaccessibles'    => PropertyInaccessible::all(),
+                'all_titles'                => UserTitleTypes::all(),
+
                
             ];
+
+            $data['section'] = BoundaryDelimitation::distinct()->orderBy('section')->pluck('section', 'section');
+            $data['chiefdom'] = BoundaryDelimitation::distinct()->orderBy('chiefdom')->pluck('chiefdom', 'chiefdom')->sort();
+            $data['district'] = BoundaryDelimitation::distinct()->orderBy('district')->pluck('district', 'district')->sort();
+            $data['province'] = BoundaryDelimitation::distinct()->orderBy('province')->pluck('province', 'province')->sort();
+            $data['ward'] = BoundaryDelimitation::distinct()->orderBy('ward')->pluck('ward', 'ward')->sort();
+            $data['constituency'] = BoundaryDelimitation::distinct()->orderBy('constituency')->pluck('constituency', 'constituency')->sort();
 
             return response()->json([
                 'status' => true,

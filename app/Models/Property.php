@@ -311,6 +311,13 @@ class Property extends Model
         ]);
     }
 
+
+    public function userDetails()
+    {
+       return $this->hasOne('App\Models\UserMain','id','user_id');
+
+    }
+
     public function getPaymentsInQuarter($year = null)
     {
         if (isset($this->paymentsInQuarter[$year])) {

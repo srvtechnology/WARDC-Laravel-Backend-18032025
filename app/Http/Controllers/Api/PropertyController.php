@@ -114,6 +114,7 @@ public function index(Request $request): JsonResponse
         //     'user' => $user->super_admin,
         // ]);
         $query = Property::with([
+            'userDetails',
             'user:id,first_name,last_name',
             'landlordFew',
             'geoRegistry',
@@ -123,7 +124,7 @@ public function index(Request $request): JsonResponse
             'districts',
             'images',
             'assessment',
-        ]);
+        ])->orderBy('id','desc');
 
 
 
@@ -1028,9 +1029,9 @@ public function updateProperty(Request $request)
         'postcode' => 'required|string|max:255',
         
         'is_draft_delivered' => 'required',
-        'delivered_name' => 'required',
-        'delivered_number' => 'required',
-        'delivered_image' => 'required',
+        // 'delivered_name' => 'required',
+        // 'delivered_number' => 'required',
+        // 'delivered_image' => 'required',
     ]);
 
     if ($validator->fails()) {
@@ -1057,25 +1058,25 @@ public function updateProperty(Request $request)
         // ---------------------
         // Update Property Data
         // ---------------------
-             $property->street_number = $request->street_number;
-              $property->street_name = $request->street_name;
-            $property->ward = $request->ward;
-            $property->constituency = $request->constituency;
-            $property->section = $request->section;
-            $property->chiefdom = $request->chiefdom;
+             $property->street_number = @$request->street_number;
+              $property->street_name = @$request->street_name;
+            $property->ward = @$request->ward;
+            $property->constituency = @$request->constituency;
+            $property->section = @$request->section;
+            $property->chiefdom = @$request->chiefdom;
 
-            $property->district = $request->district;
-            $property->province = $request->province;
-            $property->postcode = $request->postcode;
-            $property->chiefdom = $request->chiefdom;
+            $property->district = @$request->district;
+            $property->province = @$request->province;
+            $property->postcode = @$request->postcode;
+            $property->chiefdom = @$request->chiefdom;
 
             $property->is_property_inaccessible = ($propertyInaccessible && count($propertyInaccessible)) ? true : false;
-            $property->is_draft_delivered = $request->is_draft_delivered;
-            $property->delivered_name = $request->delivered_name;
-            $property->delivered_number = $request->delivered_number;
+            $property->is_draft_delivered = @$request->is_draft_delivered;
+            $property->delivered_name = @$request->delivered_name;
+            $property->delivered_number = @$request->delivered_number;
 
-             if ($request->hasFile('delivered_image')) {
-                $file = $request->file('delivered_image');
+             if (@$request->hasFile('delivered_image')) {
+                $file = @$request->file('delivered_image');
 
                 // Define a unique name with directory structure
                 $filePath = 'property/delivered/image';
@@ -1095,7 +1096,7 @@ public function updateProperty(Request $request)
              // $property->propertyInaccessible()->sync($propertyInaccessible);
              //store to Property_property_inaccessibles model first delete and then insert
 
-            $dltall=Property_property_inaccessibles::where('property_id',$request->property_id)->delete();
+            $dltall=Property_property_inaccessibles::where('property_id',@$request->property_id)->delete();
 
             foreach($propertyInaccessible as $val){
 
