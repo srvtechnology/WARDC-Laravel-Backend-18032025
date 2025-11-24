@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\UserMain;
 use Validator;
+use Hash;
 ini_set('memory_limit','512M');
 
 
@@ -122,6 +123,12 @@ class AssesmentAppUserController extends Controller
                 'street_number' => $request->street_number,
                 'is_active' => $request->is_active,
             ]);
+
+            if (!empty($request->password)) {
+                $user->update([
+                   'password'=> Hash::make($request->password),
+                ]);
+            }
 
             return response()->json([
                 'status' => true,

@@ -84,6 +84,7 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     Route::get('property-get',[PropertyControllerApp::class,'propertyGet']);
     Route::post('/property-assessment/save/yearly',[PropertyAssesmentInsertYearly::class,'propertyAssessmentSaveYearly']);
     // Route::get('/property-assessment/update/byid/{id}',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']); // req. for manual update single property
+     Route::get('user-get',[PropertyControllerApp::class,'userGet']);
 
     //===================== PROPERTY-CATEGORY ====================// 
 

@@ -103,6 +103,7 @@ public function updateProfile(Request $request)
     if ($request->filled('first_name')) $user->first_name = $request->first_name;
     if ($request->filled('last_name'))  $user->last_name  = $request->last_name;
     if ($request->filled('email'))      $user->email      = $request->email;
+    if ($request->filled('gender'))     $user->gender = $request->gender;
 
     // Handle image upload
     if ($request->hasFile('image')) {
@@ -222,6 +223,7 @@ public function updateProfileAssesmentApp(Request $request)
     // Update fields
     if ($request->filled('name'))  $user->name  = $request->name;
     if ($request->filled('email')) $user->email = $request->email;
+    if ($request->filled('gender')) $user->gender = $request->gender;
 
     // Handle image upload
     if ($request->hasFile('image')) {

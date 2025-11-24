@@ -15,7 +15,7 @@
                 <table class="" width="100%">
                     <tr>
                         <td align="left" style="width: 18%;">
-                            <img src="http://wardc.online/images/logo1.png" style="padding: 0 15px;" alt="">
+                            <img src="http://13.232.84.109/apis/storage/app/public/property/wdc.png" style="padding: 0 15px;" alt="">
 
                            {{--  <img style="padding: 0 15px;" src="{{ @$district->getPrimaryLogoUrl(0, 0, true) }}"
                                 alt=""> --}}
@@ -38,10 +38,10 @@
                                     alt="">
                             @else
                             @if(@$assessment->assessment_images_1)
-                                <img style="padding: 0 15px;" src="https://wardc.srvtechnology.com/storage/app/public/{{ @$assessment->assessment_images_1 }}"
+                                <img style="padding: 0 15px;" src="http://13.232.84.109/apis/storage/app/public/{{ @$assessment->assessment_images_1 }}"
                                     alt="">
                                 @else
-                                <img style="padding: 0 15px;" src="https://wardc.srvtechnology.com/storage/app/public/{{ @$assessment->assessment_images_2 }}"
+                                <img style="padding: 0 15px;" src="http://13.232.84.109/apis/storage/app/public/{{ @$assessment->assessment_images_2 }}"
                                     alt="">
                                 @endif
                             @endif

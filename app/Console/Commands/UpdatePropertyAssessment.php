@@ -22,7 +22,7 @@ class UpdatePropertyAssessment extends Command
     {
         ini_set('max_execution_time', 0); // no timeout
 
-        Property::where('id', '>', 115400)->chunk(50, function ($properties) {
+        Property::where('id', '>', 123467)->chunk(50, function ($properties) {
             foreach ($properties as $property) {
                 $propertyId = $property->id;
 

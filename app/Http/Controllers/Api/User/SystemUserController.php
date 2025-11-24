@@ -8,6 +8,9 @@ use App\Models\AdminUser;
 use App\Models\RoleModel;
 use App\Models\UserMain;
 use Validator;
+use Hash;
+
+
 class SystemUserController extends Controller
 {
     public function listing()
@@ -94,64 +97,127 @@ class SystemUserController extends Controller
 
     }
 
+    // public function update(Request $request)
+    // {
+    //     try {
+    //         // Validation without password
+    //         $validator = Validator::make($request->all(), [ 
+    //             'first_name' => 'required',
+    //             'last_name' => 'required',
+    //             'gender' => 'required',
+    //             'street_name' => 'required',
+    //             'street_number' => 'required',
+    //             'role_id' => 'required',
+    //             'id' => 'required',
+    //         ]);
+
+    //         if ($validator->fails()) {
+    //             return response()->json([
+    //                 'status' => 'error',
+    //                 'errors' => $validator->errors()
+    //             ], 422);
+    //         }
+
+    //         // // Find and update user
+    //         // AdminUser::where('id',$request->id)->update([
+    //         //     'first_name' => $request->first_name,
+    //         //     'gender' => $request->gender,
+    //         //     'last_name' => $request->last_name,
+    //         //     'street_name' => $request->street_name,
+    //         //     'street_number' => $request->street_number,
+    //         //     'role_id' => $request->role_id,
+    //         //     'is_active' => $request->is_active,
+    //         // ]);
+
+    //         $adminUser = AdminUser::findOrFail($request->id);
+
+    //         $adminUser->update([
+    //             'first_name'    => $request->first_name,
+    //             'gender'        => $request->gender,
+    //             'last_name'     => $request->last_name,
+    //             'street_name'   => $request->street_name,
+    //             'street_number' => $request->street_number,
+    //             'role_id'       => $request->role_id,
+    //             'is_active'     => $request->is_active,
+    //         ]);
+
+    //          if (!empty($request->password)) {
+    //             $adminUser->update([
+    //                'password'=> Hash::make($request->password),
+    //             ]);
+    //         }
+
+
+    //         return response()->json([
+    //             'status' => true,
+    //             'message' => 'Data updated successfully',
+    //         ]);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'An error occurred',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
+
+
     public function update(Request $request)
-    {
-        try {
-            // Validation without password
-            $validator = Validator::make($request->all(), [ 
-                'first_name' => 'required',
-                'last_name' => 'required',
-                'gender' => 'required',
-                'street_name' => 'required',
-                'street_number' => 'required',
-                'role_id' => 'required',
-                'id' => 'required',
-            ]);
+{
+    try {
+        // Validation without password
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required',
+            'last_name' => 'required',
+            'gender' => 'required',
+            'street_name' => 'required',
+            'street_number' => 'required',
+            'role_id' => 'required',
+            'id' => 'required',
+        ]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'status' => 'error',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            // // Find and update user
-            // AdminUser::where('id',$request->id)->update([
-            //     'first_name' => $request->first_name,
-            //     'gender' => $request->gender,
-            //     'last_name' => $request->last_name,
-            //     'street_name' => $request->street_name,
-            //     'street_number' => $request->street_number,
-            //     'role_id' => $request->role_id,
-            //     'is_active' => $request->is_active,
-            // ]);
-
-            $adminUser = AdminUser::findOrFail($request->id);
-
-            $adminUser->update([
-                'first_name'    => $request->first_name,
-                'gender'        => $request->gender,
-                'last_name'     => $request->last_name,
-                'street_name'   => $request->street_name,
-                'street_number' => $request->street_number,
-                'role_id'       => $request->role_id,
-                'is_active'     => $request->is_active,
-            ]);
-
-
+        if ($validator->fails()) {
             return response()->json([
-                'status' => true,
-                'message' => 'Data updated successfully',
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'An error occurred',
-                'error' => $e->getMessage()
-            ], 500);
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
         }
+
+        $adminUser = AdminUser::findOrFail($request->id);
+
+        $data = [
+            'first_name'    => $request->first_name,
+            'gender'        => $request->gender,
+            'last_name'     => $request->last_name,
+            'street_name'   => $request->street_name,
+            'street_number' => $request->street_number,
+            'role_id'       => $request->role_id,
+            'is_active'     => $request->is_active,
+        ];
+
+        // Update password only if provided
+        if (!empty($request->password)) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $adminUser->update($data);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Data updated successfully',
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'An error occurred',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
+
 
 
     public function delete($id)

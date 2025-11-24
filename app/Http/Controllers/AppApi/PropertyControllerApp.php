@@ -1336,4 +1336,16 @@ public function get_all_variable_datas(){
 
 
 
+    public function userGet(){
+    	 return response()->json([
+    	    	'userData'=>Auth::guard('sanctum')->user(),
+                'status' => true,
+                'message' => 'Data fetched successfully',
+            ], 200);
+    }
+
+
+
+
+
 }

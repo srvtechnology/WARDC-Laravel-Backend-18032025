@@ -178,7 +178,7 @@ Dial*161#, select Pay Bill, select WARDC and follow the instructions”</p> -->
                         <table style="width: 100%; text-align: left;">
                             <tr>
                                 <td style="text-align: left; padding-left: 47px;">
-                                    <img src="http://wardc.online/images/ca_signature2.png" alt="" style="height: 70px;">
+                                    <img src="http://13.232.84.109/apis/storage/app/public/property/ca_signature2.png" alt="" style="height: 70px;">
                                  {{--    <img src="{{  $district->getChifAdministratorSignUrl(0,0,true) }}" alt=""
                                          style="height: 70px;"> --}}
                                 </td>

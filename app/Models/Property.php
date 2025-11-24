@@ -167,6 +167,11 @@ class Property extends Model
         return $this->hasMany(PropertyAssessmentDetail::class);
     }
 
+    public function assessmentsObject()
+    {
+        return $this->hasMany(PropertyAssessmentDetail::class);
+    }
+
     public function assessmentHistory()
     {
         return $this->assessments()->whereYear('created_at', '<=', now()->format('Y'));

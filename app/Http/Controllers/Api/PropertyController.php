@@ -117,14 +117,41 @@ public function index(Request $request): JsonResponse
             'userDetails',
             'user:id,first_name,last_name',
             'landlordFew',
+            'landlord',
             'geoRegistry',
+            'registryMeters',
             'occupancies',
+            'occupancy',
             'propertyInaccessible',
             'payments',
             'districts',
             'images',
             'assessment',
+            'assessmentsObject' => function ($query) {
+                $query->with(['types', 'valuesAdded', 'categories','propertyCategoryDetails'])->latest();
+            },
+            'assessments.payments',
+            'assessments.propertyCategoryNew',
         ])->orderBy('id','desc');
+
+           //filter by user_id
+        if ($request->filled('mobile_app')) {
+            // $query->where('user_id', $user->id);
+            $query->where('properties.user_id', $user->id);
+
+            if($request->filled('property_id')){
+                $query->where('properties.id', $request->property_id);
+            }
+
+            // Paginate results
+           $properties = $query->paginate(10);
+
+             return response()->json([
+                    'success' => true,
+                    'property' => $properties,
+                    'user'=>$user->id,
+                ]);
+        }
 
 
 
@@ -198,9 +225,9 @@ public function index(Request $request): JsonResponse
         }
 
         // Filter by Occupancy Type (Key: occupancy_type)  Done 17
-        if ($request->filled('occupancy_type')) {
-            $query->whereHas('occupancies', fn($q) => $q->where('type', $request->occupancy_type));
-        }
+        // if ($request->filled('occupancy_type')) {
+        //     $query->whereHas('occupancies', fn($q) => $q->where('type', $request->occupancy_type));
+        // }
 
         // Filter by Council Adjustment (Key: council_adjustment) //done // 2
         if ($request->filled('counsil_adjustmnt')) {
@@ -682,8 +709,13 @@ public function index(Request $request): JsonResponse
 
            
 
+        
+        
+
+        
+
         // Paginate results
-        $properties = $query->paginate(10);
+        $properties = $query->paginate(50);
 
         return response()->json([
             'success' => true,

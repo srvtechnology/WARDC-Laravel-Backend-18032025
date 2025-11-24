@@ -88,7 +88,7 @@ class PaymentController extends Controller
         $allAssesments=PropertyAssessmentDetail::select('*', 'penalty as newpenalty')->where('property_id', '=', $propertyId)->orderBy('id','desc')->get();
         foreach ($allAssesments as $key => $value) {
             //get payment of that year as total paymemnt
-            $allAssesments[$key]['currentYearTotalPayment']=PropertyPayment::whereYear('created_at', $value->created_at->year)->sum('amount');
+            $allAssesments[$key]['currentYearTotalPayment']=PropertyPayment::whereYear('created_at', $value->created_at->year)->where('property_id',$value->property_id)->sum('amount');
         }
        
         return response()->json([
@@ -122,6 +122,7 @@ class PaymentController extends Controller
             "payment_type"=>"required",
             "payee_name"=>"required",
             "payment_year"=>"required",
+            "discount_offered"=>"required",
         ]);
 
         if ($validator->fails()) {
@@ -135,16 +136,19 @@ class PaymentController extends Controller
         $user = Auth::guard('sanctum')->user();
         
         $t_amount = intval(str_replace(',', '', $request->paying_amount));
+        $t_discount = intval(str_replace(',', '', $request->discount_offered ?? 0)); 
         $t_penalty = 0;
 
         //insert in to payment table
         $ins=new PropertyPayment;
         $ins->property_id=$request->property_id;
         $ins->payment_made_year=$request->payment_year;
-        $ins->amount=$t_amount;
-        $ins->total=$t_amount+$t_penalty;
+        $ins->amount=$t_amount+$t_discount;
+        $ins->total=$t_amount+$t_penalty+$t_discount;
+        $ins->discount_offered=$t_discount;
         $ins->payment_type=$request->payment_type;
-        $ins->cheque_number=$request->cheque_no;
+        $ins->cheque_number=@$request->cheque_no;
+         $ins->transaction_id=@$request->transaction_id;
         $ins->payee_name=$request->payee_name;
         $ins->admin_user_id=$user->id;
         $ins->assessment=$assesmentDetails->property_rate_without_gst;
@@ -162,7 +166,7 @@ class PaymentController extends Controller
             $insPa->property_id = $id;
             $insPa->payment_id = $payment->id;
             $insPa->year = $request->payment_year;
-            $insPa->paying_amount = $request->amount;
+            $insPa->paying_amount = $t_amount+$t_penalty+$t_discount;//$request->amount;
             $insPa->adjust_amount = $request->adjust_amount;
             $insPa->total_amount = $request->total;
             $insPa->image = $filename;
@@ -209,7 +213,7 @@ class PaymentController extends Controller
 
 
 
-
+// add discount logic
 
 public function paymentUpdate( Request $request)
 {
@@ -242,6 +246,7 @@ public function paymentUpdate( Request $request)
     $validator = Validator::make($request->all(), [
         'assessment' => 'required',
         'amount' => 'required',
+        'discount_offered'=>'required',
         'payment_type' => 'required|in:cash,cheque',
         'cheque_number' => 'nullable|required_if:payment_type,cheque',
         'payee_name' => 'required|max:250',
@@ -260,18 +265,19 @@ public function paymentUpdate( Request $request)
     $t_amount = intval(str_replace(',', '', $request->amount));
     $t_penalty = intval(str_replace(',', '', $request->penalty));;
     $t_assessment = intval(str_replace(',', '', $request->assessment));
+    $t_discount = intval(str_replace(',', '', $request->discount_offered ?? 0)); 
     $admin = Auth::guard('sanctum')->user();
 
     //update due for that year
     $assesmentDetails=PropertyAssessmentDetail::where('property_id',$find->property_id)->whereYear('created_at',$find->created_at->year)->first();
 
-    if((int)$find->total>(int)$request->amount+(int)$request->penalty){
+    if((int)$find->total>(int)$request->amount+(int)$request->penalty+(int)$request->discount_offered){
         //prev total more than comming amount then minus amount will add in due
-        $amountToAdd=(int)$find->total-(int)$request->amount-(int)$request->penalty;
+        $amountToAdd=(int)$find->total-(int)$request->amount-(int)$request->discount_offered-(int)$request->penalty;
         $updateAssesment=PropertyAssessmentDetail::where('property_id',$find->property_id)->whereYear('created_at',$find->created_at->year)->update(['due'=>$assesmentDetails->due + $amountToAdd]);
     }else{
 
-        $amountToMinus=(int)$request->amount-(int)$find->total+(int)$request->penalty;
+        $amountToMinus=(int)$request->amount-(int)$find->total+(int)$request->discount_offered+(int)$request->penalty;
         $updateAssesment=PropertyAssessmentDetail::where('property_id',$find->property_id)->whereYear('created_at',$find->created_at->year)->update(['due'=>$assesmentDetails->due - $amountToMinus]);
     }
     $finalAssementDetails=PropertyAssessmentDetail::where('property_id',$find->property_id)->whereYear('created_at',$find->created_at->year)->first();
@@ -285,9 +291,11 @@ public function paymentUpdate( Request $request)
     ]);
 
     $data['admin_user_id'] = $admin->id ?? null;
-    $data['total'] = $t_amount + $t_penalty;
-    $data['amount'] = $t_amount;
+    $data['total'] = $t_amount + $t_penalty+$t_discount;
+    $data['amount'] = $t_amount+$t_discount;
+    $data['discount_offered'] = $t_discount;
     $data['assessment'] = $t_assessment;
+    $data['transaction_id'] = @$request->transaction_id;
     $data['created_at'] = $request->created_at;
     $data['updated_at'] = $request->created_at;
     $data['penalty'] = $t_penalty;
