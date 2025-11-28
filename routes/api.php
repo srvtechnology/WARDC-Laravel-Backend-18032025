@@ -327,3 +327,5 @@ Route::get('/property-assessment-update-new', [PropertyAssesmentInsertYearly::cl
   Route::post('app-user-logout',[AppAuthController::class,'app_user_logout']);
   Route::get('get-all-variable-datas',[PropertyControllerApp::class,'get_all_variable_datas']);
  Route::get('/property-assessment/update/byid/{id}',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']); // req. for manual update single property
+ Route::get('/filter-by-ward/{ward}', [PropertyControllerApp::class, 'filterByWard']);
+ Route::get('/all-wards', [PropertyControllerApp::class, 'allwards']);

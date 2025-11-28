@@ -1348,4 +1348,40 @@ public function get_all_variable_datas(){
 
 
 
+
+
+     public function filterByWard($ward)
+    {
+        // Fetch all rows with this ward
+        $rows = BoundaryDelimitation::where('ward', $ward)->get();
+
+        return response()->json([
+            'ward' => $ward,
+            'constituencies' => $rows->pluck('constituency')->unique()->values(),
+            'sections' => $rows->pluck('section')->unique()->values(),
+            'chiefdoms' => $rows->pluck('chiefdom')->unique()->values(),
+            'districts' => $rows->pluck('district')->unique()->values(),
+            'provinces' => $rows->pluck('province')->unique()->values(),
+            'councils' => $rows->pluck('council')->unique()->values(),
+            'prefixes' => $rows->pluck('prefix')->unique()->values(),
+        ], 200);
+    }
+
+
+    public function allwards(){
+    	$rows = BoundaryDelimitation::where('district', "Western Area Rural District")
+           ->pluck('ward');
+
+
+    	 return response()->json([
+    	    	'wards'=>$rows,
+                'status' => true,
+               
+            ], 200);
+    }
+
+
+
+
+
 }
