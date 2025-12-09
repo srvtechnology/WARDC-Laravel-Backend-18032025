@@ -1320,28 +1320,28 @@ public function updateAssessment(Request $request)
         $assessment->no_of_mast=$request->no_of_mast;
         $assessment->no_of_compound_house=$request->no_of_compound_house;
         $assessment->compound_name=$request->compound_name;
-        $assessment->arrear_calc=$request->arrear_calc?$request->arrear_calc:$assessment->arrear_calc;
+        $assessment->manual_edit=$request->manual_edit;
+        $assessment->arrear_calc=$request->manual_edit =="Y" ? $request->arrear_calc:$assessment->arrear_calc;
         // $assessment->due=$request->due; // while update due will be chnage as per new assesmt value
         
        $paymentAmount = PropertyPayment::where('property_id', $request->property_id)
                 ->whereYear('created_at', $assessment->created_at->year)
                 ->sum('total');
 
-        $arrear =$request->arrear_calc?  (float)$request->arrear_calc:  (float)$assessment->arrear_calc;;
+        $arrear =$request->manual_edit =="Y"?  (float)$request->arrear_calc:  (float)$assessment->arrear_calc;;
         $rateWithoutGST = (float) ($rate['rateWithoutGST'] ?? 0);
 
-        $assessment->due = $request->due ? $request->due :  round(
+        $assessment->due = $request->manual_edit =="Y" ? $request->due :  round(
             max(0, $rateWithoutGST + $arrear + ($arrear * 0.25) - $paymentAmount),
             2
         );
 
-         // $assessment->penalty=$request->arrear_calc?$request->arrear_calc * 0.25 : $assessment->arrear_calc *0.25;
-        $arrears = $request->arrear_calc ?? $assessment->arrear_calc;
+        $arrears = $request->manual_edit =="Y" ? $request->arrear_calc:$assessment->arrear_calc;
         $assessment->penalty = $arrears > 0 ? round($arrears * 0.25, 2) : 0;
 
 
 
-        $assessment->property_rate_without_gst=$request->property_rate_without_gst?$request->property_rate_without_gst:$rate['rateWithoutGST'];
+        $assessment->property_rate_without_gst=$request->manual_edit =="Y" ?$request->property_rate_without_gst:$rate['rateWithoutGST'];
         // $assessment->property_rate_with_gst=$request->property_rate_with_gst; new cmt
         // $assessment->property_gst=$request->property_gst;  //new cmt
 

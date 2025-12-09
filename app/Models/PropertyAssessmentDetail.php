@@ -75,7 +75,8 @@ class PropertyAssessmentDetail extends Model
         'council_group_name',
         'sanitation',
         'is_rejected_pensioner',
-        'is_rejected_disability'
+        'is_rejected_disability',
+        'manual_edit'
     ];
 
     protected $appends = [
