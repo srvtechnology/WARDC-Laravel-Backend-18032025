@@ -6,6 +6,7 @@
 /storage/*.key
 /storage/pail
 /vendor
+/vendo_old
 .env
 .env.backup
 .env.production

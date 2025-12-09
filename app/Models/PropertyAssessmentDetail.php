@@ -458,37 +458,40 @@ class PropertyAssessmentDetail extends Model
     //         return $pastTotalDue*0.25;
     //     }
     // }
-    public function getPastPayableDue()
-    {
-        
-        $pastTotalPayments = PropertyPayment::where('property_id', $this->property_id)
-                ->where('created_at', '<', $this->created_at->startOfYear())
-                ->sum('amount');
+ public function getPastPayableDue()
+{
+    // Ensure created_at exists; otherwise use now()
+    $createdAt = $this->created_at ?? now();
 
-        $pastTotalDue = PropertyAssessmentDetail::where('property_id', $this->property_id)
-            ->where('created_at', '<', $this->created_at->startOfYear())
-            ->sum('property_rate_without_gst');
+    // Convert to start of year safely
+    $startOfYear = \Carbon\Carbon::parse($createdAt)->startOfYear();
 
+    // Calculate past totals
+    $pastTotalPayments = PropertyPayment::where('property_id', $this->property_id)
+        ->where('created_at', '<', $startOfYear)
+        ->sum('amount');
 
-        $pastTotalArrear = PropertyAssessmentDetail::where('property_id', $this->property_id)
-            ->where('created_at', '<', $this->created_at->startOfYear())
-            ->sum('arrear_calc');
+    $pastTotalDue = PropertyAssessmentDetail::where('property_id', $this->property_id)
+        ->where('created_at', '<', $startOfYear)
+        ->sum('property_rate_without_gst');
 
-            if ($pastTotalArrear == null) {
-               $pastTotalArrear = 0;
-            }elseif($pastTotalArrear < 0){
-                $pastTotalArrear = 0;
-            }
+    $pastTotalArrear = PropertyAssessmentDetail::where('property_id', $this->property_id)
+        ->where('created_at', '<', $startOfYear)
+        ->sum('arrear_calc');
 
-        if ($pastTotalPayments > 0) {
-             $this->pastPayableDue = $pastTotalDue - $pastTotalPayments;
-        }else{
-            $this->pastPayableDue = $pastTotalDue;
-        }
-        
+    // Normalize arrear values
+    $pastTotalArrear = max(0, $pastTotalArrear ?? 0);
 
-        return $this->pastPayableDue + ($pastTotalArrear * 0.25);
+    // Calculate payable due
+    if ($pastTotalPayments > 0) {
+        $this->pastPayableDue = $pastTotalDue - $pastTotalPayments;
+    } else {
+        $this->pastPayableDue = $pastTotalDue;
     }
+
+    return $this->pastPayableDue + ($pastTotalArrear * 0.25);
+}
+
 
     public function getCurrentQuarter()
     {
@@ -511,7 +514,7 @@ class PropertyAssessmentDetail extends Model
             return $this->currentYearTotalPayment;
         }
 
-        return $this->currentYearTotalPayment = $this->payments()->whereYear('created_at', $this->created_at->year)
+        return $this->currentYearTotalPayment = $this->payments()->whereYear('created_at', @$this->created_at->year)
         ->sum('amount');
     }
 
@@ -632,9 +635,14 @@ class PropertyAssessmentDetail extends Model
         return $this->getCurrentYearTotalDue();
     }
     public function getAssessmentYearAttribute()
-    {
-        return $this->created_at->format('Y');
+{
+    if (empty($this->created_at)) {
+        return null; // or return 'N/A' if you prefer
     }
+
+    return \Carbon\Carbon::parse($this->created_at)->format('Y');
+}
+
     public function getCurrentInstallmentDueAmountAttribute()
     {
         return $this->getCurrentInstallmentDueAmount();

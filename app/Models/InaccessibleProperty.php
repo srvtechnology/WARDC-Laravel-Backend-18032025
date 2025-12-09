@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Traits\LogsActivity;
-use Folklore\Image\Facades\Image;
-use Spatie\Activitylog\Traits\LogsActivity;
+// use Folklore\Image\Facades\Image;
+// use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
 class InaccessibleProperty extends Model
@@ -55,7 +55,8 @@ class InaccessibleProperty extends Model
     }
     public function getInaccessbileImagePath($width = 800, $height = 800)
     {
-        return $this->hasInaccessbileImage() ? url(Image::url($this->inaccessbile_property_image, $width, $height, [])) : null;   
+        // return $this->hasInaccessbileImage() ? url(Image::url($this->inaccessbile_property_image, $width, $height, [])) : null;   
+        return $this->inaccessbile_property_image;
     }
 
     public function getActivitylogOptions(): LogOptions

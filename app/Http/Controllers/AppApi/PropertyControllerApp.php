@@ -146,22 +146,33 @@ class PropertyControllerApp extends Controller
 		$recipient_photo = null;
 
         if ($request->hasFile('delivered_image')) {
-            $recipient_photo = @$request->delivered_image->store(Property::DELIVERED_IMAGE);
-            $property->delivered_image = $recipient_photo;
+            // $recipient_photo = @$request->delivered_image->store(Property::DELIVERED_IMAGE);
+            // $property->delivered_image = $recipient_photo;
+            $file = @$request->file('delivered_image');
+
+            // Define a unique name with directory structure
+            $filePath = 'property/delivered/image';
+            $fileName = uniqid() . '.' . $file->getClientOriginalExtension(); // e.g., 7Y83SbHt7r.jpg
+
+            // Store the file under storage/app/public/property/delivered/image
+            $path = $file->storeAs($filePath, $fileName, 'public');
+
+            // Optionally: save the path to DB
+            $property->delivered_image = $path;
         }
-        $propertyInaccessible = array_map('intval', $request->property_inaccessable);
-        $property->is_property_inaccessible = ($propertyInaccessible && count($propertyInaccessible)) ? true : false;
+        // $propertyInaccessible = array_map('intval', $request->property_inaccessable);
+        // $property->is_property_inaccessible = ($propertyInaccessible && count($propertyInaccessible)) ? true : false;
 
         $property->save();
 
         
-        foreach($propertyInaccessible as $val){
+        // foreach($propertyInaccessible as $val){
 
-                $insInacc=new Property_property_inaccessibles;
-                $insInacc->property_id=$property->id;
-                $insInacc->property_inaccessible_id=$val;
-                $insInacc->save();
-            }
+        //         $insInacc=new Property_property_inaccessibles;
+        //         $insInacc->property_id=$property->id;
+        //         $insInacc->property_inaccessible_id=$val;
+        //         $insInacc->save();
+        // }
 
 
         // $property->propertyInaccessible()->sync($request->property_inaccessible); //confussed
@@ -190,7 +201,14 @@ class PropertyControllerApp extends Controller
 			        @unlink($landlord->getImage()); // Use @unlink to suppress error if file doesn't exist
 			    }
 
-			    $landlordImagePath = @$request->file('landlord_image')->store(Property::ASSESSMENT_IMAGE);
+			    // $landlordImagePath = @$request->file('landlord_image')->store(Property::ASSESSMENT_IMAGE);
+
+			    $file = $request->file('landlord_image');
+                $filePath = 'property/landlord_image/image';
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
+
+                $landlordImagePath = $file->storeAs($filePath, $fileName, 'public');
+
 			}
 
 			// Get landlord title label
@@ -416,20 +434,54 @@ class PropertyControllerApp extends Controller
 			$assessmentModel->sanitation                     = $request->sanitation;
 
 			// Handle Image 1
-			if ($request->hasFile('assessment_images_1')) {
-			    if ($assessment_images->hasImageOne()) {
-			        @unlink($assessment_images->getImageOne());
-			    }
-			    $assessmentModel->assessment_images_1 = $request->file('assessment_images_1')->store(Property::ASSESSMENT_IMAGE);
-			}
+			// if ($request->hasFile('assessment_images_1')) {
+			//     if ($assessment_images->hasImageOne()) {
+			//         @unlink($assessment_images->getImageOne());
+			//     }
+			//     $assessmentModel->assessment_images_1 = $request->file('assessment_images_1')->store(Property::ASSESSMENT_IMAGE);
+			// }
 
-			// Handle Image 2
-			if ($request->hasFile('assessment_images_2')) {
-			    if ($assessment_images->hasImageTwo()) {
-			        @unlink($assessment_images->getImageTwo());
-			    }
-			    $assessmentModel->assessment_images_2 = $request->file('assessment_images_2')->store(Property::ASSESSMENT_IMAGE);
-			}
+			// // Handle Image 2
+			// if ($request->hasFile('assessment_images_2')) {
+			//     if ($assessment_images->hasImageTwo()) {
+			//         @unlink($assessment_images->getImageTwo());
+			//     }
+			//     $assessmentModel->assessment_images_2 = $request->file('assessment_images_2')->store(Property::ASSESSMENT_IMAGE);
+			// }
+
+
+        //image part
+
+            if ($request->hasFile('assessment_images_1')) {
+                $file = $request->file('assessment_images_1');
+
+                // Define a unique name with directory structure
+                $filePath = 'property/assessment/image';
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension(); // e.g., 7Y83SbHt7r.jpg
+
+                // Store the file under storage/app/public/property/assessment/image
+                $path = $file->storeAs($filePath, $fileName, 'public');
+
+                // Optionally: save the path to DB
+                $assessmentModel->assessment_images_1 = $path;
+            
+            }
+
+
+            if ($request->hasFile('assessment_images_2')) {
+                $file = $request->file('assessment_images_2');
+
+                // Define a unique name with directory structure
+                $filePath = 'property/assessment/image';
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension(); // e.g., 7Y83SbHt7r.jpg
+
+                // Store the file under storage/app/public/property/assessment/image
+                $path = $file->storeAs($filePath, $fileName, 'public');
+
+                // Optionally: save the path to DB
+                $assessmentModel->assessment_images_2 = $path;
+            
+            }
 
 			$assessmentModel->due      = $request->assessmentRateWithoutGST > 0 ? $request->assessmentRateWithoutGST : $rate['rateWithoutGST'];
 			$assessmentModel->arrear_calc=0;
@@ -615,19 +667,41 @@ class PropertyControllerApp extends Controller
 			        $registryId = isset($registry['id']) ? (int) $registry['id'] : null;
 			        $registryImageIds[] = $registryId;
 
+			        // $imagePath = null;
+
+			        // // If new image uploaded
+			        // if ($request->hasFile("registry.$key.meter_image")) {
+			        //     $existingRegistry = $property->registryMeters()->find($registryId);
+
+			        //     // Delete old image if exists
+			        //     if ($existingRegistry && $existingRegistry->image && $existingRegistry->hasImage()) {
+			        //         @unlink($existingRegistry->getImage());
+			        //     }
+
+			        //     $imagePath = $registry['meter_image']->store(Property::METER_IMAGE);
+			        // }
+
+
 			        $imagePath = null;
 
-			        // If new image uploaded
-			        if ($request->hasFile("registry.$key.meter_image")) {
-			            $existingRegistry = $property->registryMeters()->find($registryId);
+					// If new image uploaded
+					if ($request->hasFile("registry.$key.meter_image")) {
 
-			            // Delete old image if exists
-			            if ($existingRegistry && $existingRegistry->image && $existingRegistry->hasImage()) {
-			                @unlink($existingRegistry->getImage());
-			            }
+					    $existingRegistry = $property->registryMeters()->find($registryId);
 
-			            $imagePath = $registry['meter_image']->store(Property::METER_IMAGE);
-			        }
+					    // Delete old image if exists
+					    if ($existingRegistry && $existingRegistry->image && $existingRegistry->hasImage()) {
+					        @unlink($existingRegistry->getImage());
+					    }
+
+					  
+					    $file = $request->file("registry.$key.meter_image");
+					     $filePath = 'property/meter/image';
+					    $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
+
+					    $imagePath = $file->storeAs($filePath, $fileName, 'public');
+					}
+
 
 			        // Save or update record
 			        $property->registryMeters()->updateOrCreate(
@@ -1378,6 +1452,44 @@ public function get_all_variable_datas(){
                 'status' => true,
                
             ], 200);
+    }
+
+
+
+
+
+
+    public function createInAccessibleProperties(Request $request)
+    {
+        $inaccessibleProperty = new InaccessibleProperty;
+        $inaccessible_property_img = null;
+        try {
+            if ($request->hasFile('inaccessible_property_image')) {
+                $inaccessible_property_img = $request->inaccessible_property_image->store(InaccessibleProperty::INACCESSBILE_PROPERTY_IMAGE);
+            }
+        }catch(Exception $e){
+            echo $e->getMessage();
+
+        }
+        $reason_id = $request->reason;
+        $lat = $request->lat;
+        $long = $request->long;
+        $enumerator = $request->enumerator;
+        $reason_label = PropertyInaccessible::where('id',$reason_id)->value('label');
+        $inaccessibleProperty->reason = $reason_label;
+        $inaccessibleProperty->inaccessbile_property_image =  $inaccessible_property_img;
+        $inaccessibleProperty->inaccessbile_property_lat = $lat;
+        $inaccessibleProperty->inaccessbile_property_long = $long;
+        $inaccessibleProperty->enumerator = $enumerator;
+        $inaccessibleProperty->save();
+        
+       return response()->json([
+    	    	
+                'status' => true,
+                'message' => "Data inserted"
+               
+            ], 200);
+
     }
 
 

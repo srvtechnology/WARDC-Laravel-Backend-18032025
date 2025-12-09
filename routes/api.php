@@ -26,6 +26,7 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
 
    // property list and details
     Route::any('/admin/property-listing',[PropertyController::class,'index']);
+     Route::any('/admin/property-listing-new',[PropertyController::class,'indexNew']);
     Route::post('/property/details',[PropertyController::class,'propertyDetails']);
 
     // landloard edit
@@ -81,6 +82,7 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
 
     //===================== APP ====================// 
     Route::post('/property/save',[PropertyControllerApp::class,'propertySave']);
+     Route::post('/createInAccessibleProperties', [PropertyControllerApp::class, 'createInAccessibleProperties']);
     Route::get('property-get',[PropertyControllerApp::class,'propertyGet']);
     Route::post('/property-assessment/save/yearly',[PropertyAssesmentInsertYearly::class,'propertyAssessmentSaveYearly']);
     // Route::get('/property-assessment/update/byid/{id}',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']); // req. for manual update single property
@@ -326,6 +328,7 @@ Route::get('/property-assessment-update-new', [PropertyAssesmentInsertYearly::cl
   Route::post('payment-app-user-login',[AppAuthController::class,'payment_app_user_login']);
   Route::post('app-user-logout',[AppAuthController::class,'app_user_logout']);
   Route::get('get-all-variable-datas',[PropertyControllerApp::class,'get_all_variable_datas']);
- Route::get('/property-assessment/update/byid/{id}',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']); // req. for manual update single property
+ Route::get('/property-assessment/update/byid/{id}',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']); // req. for manual update single property ****
  Route::get('/filter-by-ward/{ward}', [PropertyControllerApp::class, 'filterByWard']);
  Route::get('/all-wards', [PropertyControllerApp::class, 'allwards']);
+

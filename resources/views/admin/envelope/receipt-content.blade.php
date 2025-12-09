@@ -13,9 +13,9 @@
                         <tr>                           
                             <td align="left" style="width: 18%; height: 125px;" valign="top">
                                 @if($district->primary_logo_envp)
-                                <img style="padding: 0 15px;" {{-- src="https://wardc.srvtechnology.com/storage/app/public/{{ $district->primary_logo_envp }}" --}} src="http://13.232.84.109/apis/storage/app/public/property/env2.png" alt="">
+                                <img style="padding: 0 15px;" {{-- src="https://wardc.srvtechnology.com/storage/app/public/{{ $district->primary_logo_envp }}" --}} src="https://www.wardc.online/apis/storage/app/public/property/env2.png" alt="">
                                 @else
-                                <img style="padding: 0 15px;" src="http://13.232.84.109/apis/storage/app/public/property/council_logo.jpg" alt="">
+                                <img style="padding: 0 15px;" src="https://www.wardc.online/apis/storage/app/public/property/council_logo.jpg" alt="">
 
                                 @endif
                             </td>
@@ -65,9 +65,9 @@
                             </td>
                             <td align="right" style="width: 18%;" valign="top">
                                @if($district->secondary_logo_envp)
-                                <img style="padding: 0 15px;" {{-- src="https://wardc.srvtechnology.com/storage/app/public/{{ $district->secondary_logo_envp }}" --}} src="http://13.232.84.109/apis/storage/app/public/property/wdc.png" alt="">
+                                <img style="padding: 0 15px;" {{-- src="https://wardc.srvtechnology.com/storage/app/public/{{ $district->secondary_logo_envp }}" --}} src="https://www.wardc.online/apis/storage/app/public/property/wdc.png" alt="">
                                 @else
-                                <img style="padding: 0 15px;" src="http://13.232.84.109/apis/storage/app/public/property/council_logo.jpg" alt="">
+                                <img style="padding: 0 15px;" src="https://www.wardc.online/apis/storage/app/public/property/council_logo.jpg" alt="">
 
                                 @endif
                             </td>
