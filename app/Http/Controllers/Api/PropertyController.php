@@ -2041,7 +2041,7 @@ public function indexNew(Request $request): JsonResponse
                 'userDetails',
                 'payments',
                 'assessment:id,property_id,property_rate_without_gst,demand_note_recipient_photo',
-            ])->where('')->orderBy('id','desc');
+            ])->where('chiefdom', '!=', 'Kaffu Bullom')->orderBy('id','desc');
 
       
         // Filter by Demand Draft Year (Key: demand_draft_year)  Done 27
@@ -2422,7 +2422,7 @@ public function indexNew(Request $request): JsonResponse
         if ($request->input('is_organization') == '0') {
             $query->where('is_organization', false);
         }
-        $query->where('properties.chiefdom','!=', 'Kaffu Bullom');
+       
 
 
 
