@@ -580,13 +580,20 @@ public function index(Request $request): JsonResponse
 
                 $data['district'] = BoundaryDelimitation::distinct()->orderBy('district')->pluck('district', 'district')->sort()->prepend('Select District', '');
                 $data['province'] = BoundaryDelimitation::distinct()->orderBy('province')->pluck('province', 'province')->sort()->prepend('Select Province', '');
-                $data['chiefdom'] = BoundaryDelimitation::distinct()->orderBy('chiefdom')->pluck('chiefdom', 'chiefdom')->sort()->prepend('Select Chiefdom', '');
+                $data['chiefdom'] = BoundaryDelimitation::where('chiefdom', '!=', 'Kaffu Bullom')->distinct()->orderBy('chiefdom')->pluck('chiefdom', 'chiefdom')->sort()->prepend('Select Chiefdom', '');
                 $data['constituency'] = BoundaryDelimitation::distinct()->orderBy('constituency')->pluck('constituency', 'constituency')->sort()->prepend('Select Constituency', '');
             } elseif ($user->super_admin_cus != 1) {
                 $data['district'] = BoundaryDelimitation::distinct()->orderBy('district')->pluck('district', 'district')->sort()->prepend('Select District', '');
                 $data['province'] = BoundaryDelimitation::distinct()->orderBy('province')->pluck('province', 'province')->sort()->prepend('Select Province', '');
                 $data['ward'] = BoundaryDelimitation::distinct()->orderBy('ward')->pluck('ward', 'ward')->sort()->prepend('Select All Ward', '');
-                $data['chiefdom'] = BoundaryDelimitation::distinct()->orderBy('chiefdom')->pluck('chiefdom', 'chiefdom')->sort()->prepend('Select Chiefdom', '');
+                // $data['chiefdom'] = BoundaryDelimitation::distinct()->orderBy('chiefdom')->pluck('chiefdom', 'chiefdom')->sort()->prepend('Select Chiefdom', '');
+                $data['chiefdom'] = BoundaryDelimitation::where('chiefdom', '!=', 'Kaffu Bullom')
+                    ->distinct()
+                    ->orderBy('chiefdom')
+                    ->pluck('chiefdom', 'chiefdom')
+                    ->sort()
+                    ->prepend('Select Chiefdom', '');
+
                 $data['constituency'] = BoundaryDelimitation::distinct()->orderBy('constituency')->pluck('constituency', 'constituency')->sort()->prepend('Select Constituency', '');
             } else {
                 $data['district'] = BoundaryDelimitation::where('district', $user->assign_district)
@@ -610,7 +617,7 @@ public function index(Request $request): JsonResponse
                     ->sort()
                     ->prepend('Select All Ward', '');
 
-                $data['chiefdom'] = BoundaryDelimitation::where('district', $user->assign_district)
+                $data['chiefdom'] = BoundaryDelimitation::where('district', $user->assign_district)->where('chiefdom', '!=', 'Kaffu Bullom')
                     ->distinct()
                     ->orderBy('chiefdom')
                     ->pluck('chiefdom', 'chiefdom')
@@ -2016,6 +2023,12 @@ function encodePlusCode($latitude, $longitude, $codeLength = 10)
 
 
 
+
+
+
+
+
+
 public function indexNew(Request $request): JsonResponse
 {
     // try {
@@ -2028,7 +2041,7 @@ public function indexNew(Request $request): JsonResponse
                 'userDetails',
                 'payments',
                 'assessment:id,property_id,property_rate_without_gst,demand_note_recipient_photo',
-            ])->orderBy('id','desc');
+            ])->where('')->orderBy('id','desc');
 
       
         // Filter by Demand Draft Year (Key: demand_draft_year)  Done 27
@@ -2209,13 +2222,6 @@ public function indexNew(Request $request): JsonResponse
 
 
 
-
-
-
-
-
-
-
         // Apply filters based on request parameters
         if ($request->filled('town')) {
             $query->where('properties.section', $request->town);
@@ -2373,11 +2379,21 @@ public function indexNew(Request $request): JsonResponse
         // });
 
         // Landlord Telephone Number  done 34
+        // if ($request->filled('telephone_number')) {
+        //     $query->whereHas('landlord', function ($q) use ($request) {
+        //         $q->where('mobile_1', 'like', "%{$request->telephone_number}%");
+        //     });
+        // }
+
         if ($request->filled('telephone_number')) {
             $query->whereHas('landlord', function ($q) use ($request) {
-                $q->where('mobile_1', 'like', "%{$request->telephone_number}%");
+                $q->where(function ($sub) use ($request) {
+                    $sub->where('mobile_1', 'like', "%{$request->telephone_number}%")
+                        ->orWhere('mobile_2', 'like', "%{$request->telephone_number}%");
+                });
             });
         }
+
 
         // Open Location Code  //done // 3
         if ($request->filled('open_location_code')) {
@@ -2406,6 +2422,7 @@ public function indexNew(Request $request): JsonResponse
         if ($request->input('is_organization') == '0') {
             $query->where('is_organization', false);
         }
+        $query->where('properties.chiefdom','!=', 'Kaffu Bullom');
 
 
 
