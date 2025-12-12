@@ -331,4 +331,5 @@ Route::get('/property-assessment-update-new', [PropertyAssesmentInsertYearly::cl
  Route::get('/property-assessment/update/byid/{id}',[PropertyAssesmentInsertYearly::class,'propertyAssessmentUpdate']); // req. for manual update single property ****
  Route::get('/filter-by-ward/{ward}', [PropertyControllerApp::class, 'filterByWard']);
  Route::get('/all-wards', [PropertyControllerApp::class, 'allwards']);
+ Route::post('/name-fetch', [PropertyController::class, 'namefetch']);
 

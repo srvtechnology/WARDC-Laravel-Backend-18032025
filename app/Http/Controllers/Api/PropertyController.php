@@ -39,6 +39,7 @@ use App\Models\AdjustmentValue;
 use App\Models\Adjustment;
 use App\Models\Swimming;
 use App\Models\User;
+use App\Models\UserMain;
 use App\Models\Bulk;
 use App\Models\District;
 use App\Models\InaccessibleProperty;
@@ -2407,7 +2408,7 @@ public function indexNew(Request $request): JsonResponse
 
         // Filter by user name //done 35
         if ($request->filled('name')) {
-            $query->whereHas('user', function ($q) use ($request) {
+            $query->whereHas('userDetails', function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->name}%");
             });
         }
@@ -2460,6 +2461,26 @@ public function indexNew(Request $request): JsonResponse
     //         'error' => $e->getMessage()
     //     ], 500);
     // }
+}
+
+
+
+
+
+
+
+
+
+
+public function namefetch(Request $request){
+     $assessmentUser = UserMain::select('name')->where('name', 'like', '' . strtolower($request->mask) . '%')->get();
+
+        return response()->json([
+            'success' => true,
+            'assessmentUser' => $assessmentUser
+        ], 200);
+
+
 }
 
 
