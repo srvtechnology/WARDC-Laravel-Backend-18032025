@@ -332,4 +332,6 @@ Route::get('/property-assessment-update-new', [PropertyAssesmentInsertYearly::cl
  Route::get('/filter-by-ward/{ward}', [PropertyControllerApp::class, 'filterByWard']);
  Route::get('/all-wards', [PropertyControllerApp::class, 'allwards']);
  Route::post('/name-fetch', [PropertyController::class, 'namefetch']);
+ Route::post('/arrears-analytics', [App\Http\Controllers\Api\ChartContoller::class, 'getFilteredArrears']);
+
 
