@@ -177,8 +177,15 @@ Dial*161#, select Pay Bill, select WARDC and follow the instructions”</p> -->
                     <td style="text-align: left; width: 60%">
                         <table style="width: 100%; text-align: left;">
                             <tr>
-                                <td style="text-align: left; padding-left: 47px;">
-                                    <img src="https://www.wardc.online/apis/storage/app/public/property/ca_signature2.png" alt="" style="height: 70px;">
+                                <td style="text-align: left; padding-left: 47px;" >
+                                  <div style="text-align:center;">
+  <img
+    src="https://www.wardc.online/apis/storage/app/public/property/ca_signature2.png"
+    alt="Signature"
+    style="max-height: 60px; width: auto;"
+  >
+</div>
+
                                  {{--    <img src="{{  $district->getChifAdministratorSignUrl(0,0,true) }}" alt=""
                                          style="height: 70px;"> --}}
                                 </td>
@@ -225,23 +232,23 @@ Dial*161#, select Pay Bill, select WARDC and follow the instructions”</p> -->
 
                             <span style="display: block; margin-bottom: 4px">Enquiries: Send E-mails to <a
                                     href="mailto:{{  $district->enquiries_email }}"> {{  $district->enquiries_email }}</a></span>
-                            @if($district->enquiries_phone!='')        
+                            {{-- @if($district->enquiries_phone!='')    --}}     
                             <span style="display: block;">
                             <span style="color: red; font-weight: bold;">FOR MOBILE</span>
                             <!-- <span style="font-size: 14px; font-weight: bold">{{  $district->enquiries_phone }}</span></span> -->
-                            <span style="font-size: 14px; font-weight: bold">+232 76 753 482</span></span>
-                            @endif
-                            @if($district->enquiries_phone2!='')  
+                            <span style="font-size: 14px; font-weight: bold">+23278218248</span></span>
+                           {{--  @endif
+                            @if($district->enquiries_phone2!='')   --}}
                             <span style="display: block;">
                             <span style="color: red; font-weight: bold;">FOR MOBILE</span>
                             <!-- <span style="font-size: 14px; font-weight: bold">{{  $district->enquiries_phone2 }}</span></span> -->
-                            <span style="font-size: 14px; font-weight: bold">+232 76 753 482 </span></span>
-                            @endif
+                            <span style="font-size: 14px; font-weight: bold">+23231887449</span></span>
+                          {{--   @endif --}}
                         </p>
                     </td>
                     <td>
                         <p style="text-align: right;" class="officer-text">
-                            Enumerator: {{ $property->user->name ?? 'Unknown' }}
+                            Enumerator: {{ $property->userDetails->name ?? 'Unknown' }}
                         </p>
                     </td>
                 </tr>

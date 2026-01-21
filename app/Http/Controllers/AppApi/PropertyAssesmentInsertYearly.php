@@ -322,7 +322,7 @@ public function propertyAssessmentSaveYearly()
 
 
 
-// update existing propery array, due etc.. loop //not req
+// update existing propery array, due // req. for manual update single property ****
 public function propertyAssessmentUpdate(Request $request,$id){
 
 

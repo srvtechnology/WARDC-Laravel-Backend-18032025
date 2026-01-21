@@ -258,34 +258,103 @@ public function getFilteredPayments(Request $request)
 
 
 
+// public function getFilteredArrears(Request $request)
+// {
+//     $wardId = $request->ward_id;
+//     $userId = $request->user_id;
+//     $type   = $request->type ?? 'yearly';
+
+//     $query = PropertyAssessmentDetail::query();
+
+//     // Ward filter
+//     if (!empty($wardId)) {
+//         $query->whereHas('property', function ($q) use ($wardId) {
+//             $q->where('ward', $wardId);
+//         });
+//     }
+
+//     // User filter
+//     if (!empty($userId)) {
+//         $query->whereHas('property.user', function ($q) use ($userId) {
+//             $q->where('id', $userId);
+//         });
+//     }
+
+//     // ======================
+//     // MONTHLY
+//     // ======================
+//     if ($type === 'monthly') {
+
+//         $results = $query
+//             ->selectRaw('
+//                 MONTH(created_at) as month_no,
+//                 DATE_FORMAT(created_at, "%b") as month,
+//                 SUM(arrear_calc) as total
+//             ')
+//             ->groupBy('month_no', 'month')
+//             ->orderBy('month_no')
+//             ->get()
+//             ->map(function ($row) {
+//                 return [
+//                     'month' => $row->month,
+//                     'total' => round($row->total, 2),
+//                 ];
+//             });
+
+//     }
+//     // ======================
+//     // YEARLY
+//     // ======================
+//     else {
+
+//         $results = $query
+//             ->selectRaw('YEAR(created_at) as year, SUM(arrear_calc) as total')
+//             ->groupBy('year')
+//             ->orderBy('year')
+//             ->get()
+//             ->map(function ($row) {
+//                 return [
+//                     'year'  => $row->year,
+//                     'total' => round($row->total, 2),
+//                 ];
+//             });
+//     }
+
+//     return response()->json([
+//         'status' => true,
+//         'data'   => $results,
+//     ]);
+// }
+
 public function getFilteredArrears(Request $request)
 {
     $wardId = $request->ward_id;
     $userId = $request->user_id;
-    $type   = $request->type ?? 'yearly';
+    $type   = $request->type ?? 'monthly';
+    $year   = (int) ($request->year ?? now()->year);
 
-    $query = PropertyAssessmentDetail::query();
+    /* ================= BASE QUERY ================= */
+    $baseQuery = PropertyAssessmentDetail::query();
 
-    // Ward filter
-    if (!empty($wardId)) {
-        $query->whereHas('property', function ($q) use ($wardId) {
+    if ($wardId) {
+        $baseQuery->whereHas('property', function ($q) use ($wardId) {
             $q->where('ward', $wardId);
         });
     }
 
-    // User filter
-    if (!empty($userId)) {
-        $query->whereHas('property.user', function ($q) use ($userId) {
+    if ($userId) {
+        $baseQuery->whereHas('property.user', function ($q) use ($userId) {
             $q->where('id', $userId);
         });
     }
 
-    // ======================
-    // MONTHLY
-    // ======================
+    /* ================= MONTHLY ================= */
     if ($type === 'monthly') {
 
+        $query = clone $baseQuery;
+
         $results = $query
+            ->whereYear('created_at', $year)
             ->selectRaw('
                 MONTH(created_at) as month_no,
                 DATE_FORMAT(created_at, "%b") as month,
@@ -294,21 +363,25 @@ public function getFilteredArrears(Request $request)
             ->groupBy('month_no', 'month')
             ->orderBy('month_no')
             ->get()
-            ->map(function ($row) {
+            ->map(function ($row) use ($year) {
                 return [
                     'month' => $row->month,
+                    'year'  => $year,
                     'total' => round($row->total, 2),
                 ];
             });
-
     }
-    // ======================
-    // YEARLY
-    // ======================
+
+    /* ================= YEARLY ================= */
     else {
 
+        $query = clone $baseQuery;
+
         $results = $query
-            ->selectRaw('YEAR(created_at) as year, SUM(arrear_calc) as total')
+            ->selectRaw('
+                YEAR(created_at) as year,
+                SUM(arrear_calc) as total
+            ')
             ->groupBy('year')
             ->orderBy('year')
             ->get()
@@ -322,9 +395,10 @@ public function getFilteredArrears(Request $request)
 
     return response()->json([
         'status' => true,
-        'data'   => $results,
+        'data'   => $results
     ]);
 }
+
 
 
 

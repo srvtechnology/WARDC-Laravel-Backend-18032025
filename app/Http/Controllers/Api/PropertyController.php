@@ -230,7 +230,7 @@ public function index(Request $request): JsonResponse
         //     $query->whereHas('occupancies', fn($q) => $q->where('type', $request->occupancy_type));
         // }
 
-        // Filter by Council Adjustment (Key: council_adjustment) //done // 2
+        // Filter by Council Adjustment (Key: counsil_adjustmnt) //done // 2
         if ($request->filled('counsil_adjustmnt')) {
             $allDataFromCounsilTable = PropertyToCounsilGroupA::pluck('property_id')->toArray();
             $query->{$request->counsil_adjustmnt == 'Yes' ? 'whereIn' : 'whereNotIn'}('properties.id', $allDataFromCounsilTable);
@@ -2036,13 +2036,28 @@ public function indexNew(Request $request): JsonResponse
         $user = Auth::guard('sanctum')->user();
         $data=[];
       
+        // $query = Property::with([
+        //         'user:id,first_name,last_name',
+        //         'landlordFew:id,property_id,first_name,middle_name,surname',
+        //         'userDetails',
+        //         'payments',
+        //         'assessment:id,property_id,property_rate_without_gst,demand_note_recipient_photo',
+        //     ])->where('chiefdom', '!=', 'Kaffu Bullom')->orderBy('id','desc');
+
         $query = Property::with([
                 'user:id,first_name,last_name',
                 'landlordFew:id,property_id,first_name,middle_name,surname',
                 'userDetails',
                 'payments',
                 'assessment:id,property_id,property_rate_without_gst,demand_note_recipient_photo',
-            ])->where('chiefdom', '!=', 'Kaffu Bullom')->orderBy('id','desc');
+                ])
+                ->where(function ($q) {
+                    $q->where('chiefdom', '!=', 'Kaffu Bullom')
+                      ->orWhereNull('chiefdom')
+                      ->orWhere('chiefdom', '');
+                })
+                ->orderBy('id', 'desc');
+
 
       
         // Filter by Demand Draft Year (Key: demand_draft_year)  Done 27
@@ -2061,11 +2076,11 @@ public function indexNew(Request $request): JsonResponse
         }
 
         // Filter by Gated Community Status (Key: gated_community)  done 47, 48
-        if ($request->filled('gated_community')) {
-            $query->whereHas('assessment', function ($q) use ($request) {
-                $q->where('gated_community', $request->gated_community);
-            });
-        }
+        // if ($request->filled('gated_community')) {
+        //     $query->whereHas('assessment', function ($q) use ($request) {
+        //         $q->where('gated_community', $request->gated_community);
+        //     });
+        // }
 
         // Filter by District ID (Fixed to 13) (Key: fixed_district_13)
         // $query->whereHas('districts', function ($q) {
@@ -2110,11 +2125,23 @@ public function indexNew(Request $request): JsonResponse
         //     $query->whereHas('occupancies', fn($q) => $q->where('type', $request->occupancy_type));
         // }
 
-        // Filter by Council Adjustment (Key: council_adjustment) //done // 2
+        // Filter by Council Adjustment (Key: counsil_adjustmnt) //done // 2
         if ($request->filled('counsil_adjustmnt')) {
-            $allDataFromCounsilTable = PropertyToCounsilGroupA::pluck('property_id')->toArray();
-            $query->{$request->counsil_adjustmnt == 'Yes' ? 'whereIn' : 'whereNotIn'}('properties.id', $allDataFromCounsilTable);
-        }
+
+    if ($request->counsil_adjustmnt === 'yes') {
+        $query->whereIn('properties.id', function ($q) {
+            $q->select('property_id')
+              ->from('property_to_counsil_adjustment_group_a');
+        });
+    } else {
+        $query->whereNotIn('properties.id', function ($q) {
+            $q->select('property_id')
+              ->from('property_to_counsil_adjustment_group_a');
+        });
+    }
+}
+
+
 
         // Filter by Property ID (Key: property_id) //done // 1
         if ($request->filled('property_id')) {
@@ -2302,7 +2329,7 @@ public function indexNew(Request $request): JsonResponse
         if ($request->filled('form_price') && $request->filled('to_price')) {
             $query->whereHas('assessment', function ($q) use ($request) {
                 $q->whereBetween('property_rate_without_gst', [$request->form_price, $request->to_price])
-                  ->whereYear('created_at', $request->demand_draft_year);
+                  ;
             });
         }
 
@@ -2343,11 +2370,11 @@ public function indexNew(Request $request): JsonResponse
 
         // Property Inaccessible
         // done 16
-        if ($request->filled('property_inaccessible')) {
-            $query->whereHas('propertyInaccessible', function ($q) use ($request) {
-                $q->where('id', $request->property_inaccessible);
-            });
-        }
+        // if ($request->filled('property_inaccessible')) {
+        //     $query->whereHas('propertyInaccessible', function ($q) use ($request) {
+        //         $q->where('id', $request->property_inaccessible);
+        //     });
+        // }
 
         // Landlord Filters //done 29 , 30
         $query->whereHas('landlord', function ($q) use ($request) {
@@ -2380,20 +2407,21 @@ public function indexNew(Request $request): JsonResponse
         // });
 
         // Landlord Telephone Number  done 34
-        // if ($request->filled('telephone_number')) {
-        //     $query->whereHas('landlord', function ($q) use ($request) {
-        //         $q->where('mobile_1', 'like', "%{$request->telephone_number}%");
-        //     });
-        // }
-
         if ($request->filled('telephone_number')) {
             $query->whereHas('landlord', function ($q) use ($request) {
-                $q->where(function ($sub) use ($request) {
-                    $sub->where('mobile_1', 'like', "%{$request->telephone_number}%")
-                        ->orWhere('mobile_2', 'like', "%{$request->telephone_number}%");
-                });
+                $q->where('mobile_1', 'like', "%{$request->telephone_number}%")
+                ->orWhere('mobile_2', 'like', "%{$request->telephone_number}%");;
             });
         }
+
+        // if ($request->filled('telephone_number')) {
+        //     $query->whereHas('landlord', function ($q) use ($request) {
+        //         $q->where(function ($sub) use ($request) {
+        //             $sub->where('mobile_1', 'like', "%{$request->telephone_number}%")
+        //                 ->orWhere('mobile_2', 'like', "%{$request->telephone_number}%");
+        //         });
+        //     });
+        // }
 
 
         // Open Location Code  //done // 3
