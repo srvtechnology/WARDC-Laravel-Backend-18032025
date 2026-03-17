@@ -22,8 +22,8 @@
                             </td>
                             <td align="left" style="text-align: left; font-weight:bold;" class="installment-section">
                                 <ul>
-                                    <li><span>01-01-2025 - 31-03-{{ $assessment->created_at->year }}</span></li>
-                                    <li><span>01-04-2025 - 30-06-{{ $assessment->created_at->year }}</span></li>
+                                    <li><span>01-01-{{ $assessment->created_at->year }} - 31-03-{{ $assessment->created_at->year }}</span></li>
+                                    <li><span>01-04-{{ $assessment->created_at->year }} - 30-06-{{ $assessment->created_at->year }}</span></li>
                                     <!-- <li><span>- 30-09-{{ $assessment->created_at->year }}</span></li>
                                     <li><span>- 31-12-{{ $assessment->created_at->year }}</span></li> -->
                                 </ul>
