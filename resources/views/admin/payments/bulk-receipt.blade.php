@@ -22,7 +22,8 @@
 
         @include('admin.payments.receipt-account-details', ['property' => @$property,  'assessment' => @$property->assessment, 'paymentInQuarter' => @$property->getPaymentsInQuarter($year), 'year' => $year,'district'=>@$district])
 
-        <div class="page-break"></div>
+        {{-- <div class="page-break"></div> --}}
+        <div style="page-break-before: always;"></div>
         @include('admin.payments.receipt-policy',['property' => @$property, 'assessment' => @$property->assessment,'district'=>@$district, 'year' => $year])
 
          @include('admin.payments.repict_assement_property_payment',['property' => @$property])

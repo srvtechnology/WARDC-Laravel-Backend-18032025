@@ -16,6 +16,8 @@ class PropertyAssessmentSaveYearly extends Command
      * Run using: php artisan property:assessment-save-yearly
      */
 
+    // per year after connect wardc terminal from gitbash need to run that command , so that new year record insert
+
     // php artisan property:assessment-save-yearly
 
 
