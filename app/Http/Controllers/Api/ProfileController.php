@@ -13,10 +13,11 @@ use Validator;
 use Log;
 use Illuminate\Validation\Rule;
 use App\Models\UserMain;
-
+use App\Traits\FileUploadTrait;
 
 class ProfileController extends Controller
 {
+    use FileUploadTrait;
 
 
 public function changePassword(Request $request)
@@ -108,15 +109,14 @@ public function updateProfile(Request $request)
     // Handle image upload
     if ($request->hasFile('image')) {
         $image = $request->file('image');
-        $filename = time() . '-' . rand(1000, 9999) . '.' . $image->getClientOriginalExtension();
-        $path = $image->storeAs('public/user_image', $filename);
+        $path = $this->uploadFile($image, 'user_image');
 
         // delete old image if exists
-        if ($user->image && Storage::exists('public/user_image/' . $user->image)) {
-            Storage::delete('public/user_image/' . $user->image);
+        if ($user->image) {
+            $this->deleteFile($user->image);
         }
 
-        $user->image = $filename;
+        $user->image = $path;
     }
 
     $saved = $user->save();
@@ -228,15 +228,14 @@ public function updateProfileAssesmentApp(Request $request)
     // Handle image upload
     if ($request->hasFile('image')) {
         $image = $request->file('image');
-        $filename = time() . '-' . rand(1000, 9999) . '.' . $image->getClientOriginalExtension();
-        $path = $image->storeAs('public/user_image', $filename);
+        $path = $this->uploadFile($image, 'user_image');
 
         // delete old image if exists
-        if ($user->image && Storage::exists('public/user_image/' . $user->image)) {
-            Storage::delete('public/user_image/' . $user->image);
+        if ($user->image) {
+            $this->deleteFile($user->image);
         }
 
-        $user->image = $filename;
+        $user->image = $path;
     }
 
     $saved = $user->save();

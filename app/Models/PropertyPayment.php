@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Folklore\Image\Facades\Image;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 // use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
@@ -122,17 +123,17 @@ class PropertyPayment extends Model
 
     public function getPhysicalReceiptImage()
     {
-        return storage_path('app/' . $this->physical_receipt_image);
+        return Storage::disk('s3')->url($this->physical_receipt_image);
     }
 
     public function hasPhysicalReceiptImage()
     {
-        return (bool) $this->physical_receipt_image && file_exists($this->getPhysicalReceiptImage());
+        return (bool) $this->physical_receipt_image && Storage::disk('s3')->exists($this->physical_receipt_image);
     }
 
     public function getPhysicalReceiptImagePath($width = 100, $height = 100)
     {
-        return $this->hasPhysicalReceiptImage() ? url(Image::url($this->physical_receipt_image, $width, $height, [])) : null;   
+        return $this->hasPhysicalReceiptImage() ? Storage::disk('s3')->url($this->physical_receipt_image) : null;   
     }
 
 
@@ -146,17 +147,17 @@ class PropertyPayment extends Model
 
     public function getPensionerDiscountImage()
     {
-        return storage_path('app/' . $this->pensioner_discount_image);
+        return Storage::disk('s3')->url($this->pensioner_discount_image);
     }
 
     public function hasPensionerDiscountImage()
     {
-        return (bool) $this->pensioner_discount_image && file_exists($this->getPensionerDiscountImage());
+        return (bool) $this->pensioner_discount_image && Storage::disk('s3')->exists($this->pensioner_discount_image);
     }
 
     public function getPensionerDiscountImagePath($width = 100, $height = 100)
     {
-        return $this->hasPensionerDiscountImage() ? url(Image::url($this->pensioner_discount_image, $width, $height, [])) : null;   
+        return $this->hasPensionerDiscountImage() ? Storage::disk('s3')->url($this->pensioner_discount_image) : null;   
     }
 
 
@@ -168,17 +169,17 @@ class PropertyPayment extends Model
 
     public function getDisabilityDiscountImage()
     {
-        return storage_path('app/' . $this->disability_discount_image);
+        return Storage::disk('s3')->url($this->disability_discount_image);
     }
 
     public function hasDisabilityDiscountImage()
     {
-        return (bool) $this->disability_discount_image && file_exists($this->getDisabilityDiscountImage());
+        return (bool) $this->disability_discount_image && Storage::disk('s3')->exists($this->disability_discount_image);
     }
 
     public function getDisabilityDiscountImagePath($width = 100, $height = 100)
     {
-        return $this->hasDisabilityDiscountImage() ? url(Image::url($this->disability_discount_image, $width, $height, [])) : null;   
+        return $this->hasDisabilityDiscountImage() ? Storage::disk('s3')->url($this->disability_discount_image) : null;   
     }
 
 }

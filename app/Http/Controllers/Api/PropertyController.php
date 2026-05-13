@@ -38,6 +38,7 @@ use App\Models\PropertySanitationType;
 use App\Models\AdjustmentValue;
 use App\Models\Adjustment;
 use App\Models\Swimming;
+use App\Traits\FileUploadTrait;
 use App\Models\User;
 use App\Models\UserMain;
 use App\Models\Bulk;
@@ -69,6 +70,7 @@ ini_set('memory_limit','512M');
 
 class PropertyController extends Controller
 {
+    use FileUploadTrait;
     // public function index()
     // {
     //     $response = [];
@@ -1120,10 +1122,7 @@ public function updateProperty(Request $request)
 
                 // Define a unique name with directory structure
                 $filePath = 'property/delivered/image';
-                $fileName = uniqid() . '.' . $file->getClientOriginalExtension(); // e.g., 7Y83SbHt7r.jpg
-
-                // Store the file under storage/app/public/property/delivered/image
-                $path = $file->storeAs($filePath, $fileName, 'public');
+                $path = $this->uploadFile($file, $filePath);
 
                 // Optionally: save the path to DB
                 $property->delivered_image = $path;
@@ -1420,40 +1419,26 @@ public function updateAssessment(Request $request)
             // ------------------------------------ end-1 -----------------------------------------
 
 
-        // $assessment->property_rate_without_gst = $newRateAmount; // new cmt
-
-        //image part
-
-            if ($request->hasFile('image1')) {
-                $file = $request->file('image1');
-
-                // Define a unique name with directory structure
-                $filePath = 'property/assessment/image';
-                $fileName = uniqid() . '.' . $file->getClientOriginalExtension(); // e.g., 7Y83SbHt7r.jpg
-
-                // Store the file under storage/app/public/property/assessment/image
-                $path = $file->storeAs($filePath, $fileName, 'public');
-
-                // Optionally: save the path to DB
+        // $assessment->property_rate_without_gst = $newRateAmount; // new c        //image part
+        if ($request->hasFile('image1')) {
+            $file = $request->file('image1');
+            $filePath = 'property/assessment/image';
+            $path = $this->uploadFile($file, $filePath);
+            if ($path) {
                 $assessment->assessment_images_1 = $path;
-            
             }
+        }
 
 
-            if ($request->hasFile('image2')) {
-                $file = $request->file('image2');
-
-                // Define a unique name with directory structure
-                $filePath = 'property/assessment/image';
-                $fileName = uniqid() . '.' . $file->getClientOriginalExtension(); // e.g., 7Y83SbHt7r.jpg
-
-                // Store the file under storage/app/public/property/assessment/image
-                $path = $file->storeAs($filePath, $fileName, 'public');
-
-                // Optionally: save the path to DB
+        if ($request->hasFile('image2')) {
+            $file = $request->file('image2');
+            $filePath = 'property/assessment/image';
+            $path = $this->uploadFile($file, $filePath);
+            if ($path) {
                 $assessment->assessment_images_2 = $path;
-            
             }
+        }
+
         $assessment->save();
 
         //delete and insert
@@ -1970,8 +1955,7 @@ function encodePlusCode($latitude, $longitude, $codeLength = 10)
                 if (isset($meter['imageFile']) && $meter['imageFile'] instanceof \Illuminate\Http\UploadedFile) {
                     $file = $meter['imageFile'];
                     $filePath = 'property/meter/image';
-                    $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
-                    $imagePath = $file->storeAs($filePath, $fileName, 'public');
+                    $imagePath = $this->uploadFile($file, $filePath);
                 }
 
                 if (isset($meter['id']) && $meter['id'] !== null) {

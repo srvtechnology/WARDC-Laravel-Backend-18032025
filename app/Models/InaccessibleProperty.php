@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Traits\LogsActivity;
 // use Folklore\Image\Facades\Image;
 // use Spatie\Activitylog\Traits\LogsActivity;
@@ -47,16 +48,15 @@ class InaccessibleProperty extends Model
     }
     public function getInaccessibleImage()
     {
-        return storage_path('app/' . $this->inaccessbile_property_image);
+        return Storage::disk('s3')->url($this->inaccessbile_property_image);
     }
     public function hasInaccessbileImage()
     {
-        return (bool) $this->inaccessbile_property_image && file_exists($this->getInaccessibleImage());
+        return (bool) $this->inaccessbile_property_image && Storage::disk('s3')->exists($this->inaccessbile_property_image);
     }
     public function getInaccessbileImagePath($width = 800, $height = 800)
     {
-        // return $this->hasInaccessbileImage() ? url(Image::url($this->inaccessbile_property_image, $width, $height, [])) : null;   
-        return $this->inaccessbile_property_image;
+        return $this->hasInaccessbileImage() ? Storage::disk('s3')->url($this->inaccessbile_property_image) : null;   
     }
 
     public function getActivitylogOptions(): LogOptions

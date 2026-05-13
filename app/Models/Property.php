@@ -433,17 +433,17 @@ class Property extends Model
 
     public function hasDeliveredImage()
     {
-        return (bool) $this->delivered_image && file_exists($this->getDeliveredImage());
+        return (bool) $this->delivered_image && Storage::disk('s3')->exists($this->delivered_image);
     }
 
     public function getDeliveredImage()
     {
-        return storage_path('app/' . $this->delivered_image);
+        return Storage::disk('s3')->url($this->delivered_image);
     }
 
     public function getDeliveredImagePath($width = 100, $height = 100)
     {
-        return $this->hasDeliveredImage() ? url(Image::url($this->delivered_image, $width, $height, [])) : null;
+        return $this->hasDeliveredImage() ? Storage::disk('s3')->url($this->delivered_image) : null;
     }
 
     public function generateAssessments()
@@ -460,23 +460,15 @@ class Property extends Model
 
             $currentYearAssessment = $assessment->replicate();
 
-            if (Storage::has($assessment->assessment_images_1)) {
-
-                $targetFile = Storage::path($assessment->assessment_images_1);
-                $filename = Property::ASSESSMENT_IMAGE . "/copy_" . basename($targetFile);
-
-                File::copy(Storage::path($assessment->assessment_images_1), Storage::path($filename));
-
+            if (Storage::disk('s3')->exists($assessment->assessment_images_1)) {
+                $filename = Property::ASSESSMENT_IMAGE . "/copy_" . uniqid() . ".jpg";
+                Storage::disk('s3')->copy($assessment->assessment_images_1, $filename);
                 $currentYearAssessment->assessment_images_1 = $filename;
             }
 
-            if (Storage::has($assessment->assessment_images_2)) {
-
-                $targetFile = Storage::path($assessment->assessment_images_2);
-                $filename = Property::ASSESSMENT_IMAGE . "/copy_" . basename($targetFile);
-
-                File::copy(Storage::path($assessment->assessment_images_2), Storage::path($filename));
-
+            if (Storage::disk('s3')->exists($assessment->assessment_images_2)) {
+                $filename = Property::ASSESSMENT_IMAGE . "/copy_" . uniqid() . ".jpg";
+                Storage::disk('s3')->copy($assessment->assessment_images_2, $filename);
                 $currentYearAssessment->assessment_images_2 = $filename;
             }
 
@@ -511,15 +503,15 @@ class Property extends Model
     }
     public function getAddressImage()
     {
-        return storage_path('app/' . $this->address_image);
+        return Storage::disk('s3')->url($this->address_image);
     }
     public function hasAddressImage()
     {
-        return (bool) $this->address_image && file_exists($this->getAddressImage());
+        return (bool) $this->address_image && Storage::disk('s3')->exists($this->address_image);
     }
     public function getAddressImagePath($width = 800, $height = 800)
     {
-        return $this->hasAddressImage() ? url(Image::url($this->address_image, $width, $height, [])) : null;   
+        return $this->hasAddressImage() ? Storage::disk('s3')->url($this->address_image) : null;   
     }
 
 
@@ -531,15 +523,15 @@ class Property extends Model
     }
     public function getConveyanceImage()
     {
-        return storage_path('app/' . $this->conveyance_image);
+        return Storage::disk('s3')->url($this->conveyance_image);
     }
     public function hasConveyanceImage()
     {
-        return (bool) $this->conveyance_image && file_exists($this->getConveyanceImage());
+        return (bool) $this->conveyance_image && Storage::disk('s3')->exists($this->conveyance_image);
     }
     public function getConveyanceImagePath($width = 800, $height = 800)
     {
-        return $this->hasConveyanceImage() ? url(Image::url($this->conveyance_image, $width, $height, [])) : null;   
+        return $this->hasConveyanceImage() ? Storage::disk('s3')->url($this->conveyance_image) : null;   
     }
 }
 

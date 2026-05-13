@@ -134,7 +134,7 @@ class PropertyAssessmentDetail extends Model
 
     public function getDemandNoteRecipientPhotoUrlAttribute()
     {
-        return $this->attributes['demand_note_recipient_photo'] ? url($this->attributes['demand_note_recipient_photo']) : null;
+        return $this->attributes['demand_note_recipient_photo'] ? Storage::disk('s3')->url($this->attributes['demand_note_recipient_photo']) : null;
     }
 
 
@@ -247,7 +247,7 @@ class PropertyAssessmentDetail extends Model
 
     public function getOriginalOneAttribute()
     {
-        return $this->hasImageOne() ? url($this->assessment_images_1) : null;
+        return $this->hasImageOne() ? Storage::disk('s3')->url($this->assessment_images_1) : null;
     }
 
     public function getSmallPreviewOneAttribute()
@@ -262,29 +262,29 @@ class PropertyAssessmentDetail extends Model
 
     public function hasImageOne()
     {
-        return $this->assessment_images_1 && file_exists($this->getImageOne());
+        return $this->assessment_images_1 && Storage::disk('s3')->exists($this->assessment_images_1);
     }
 
     public function getImageOne()
     {
-        return storage_path('app/' . $this->assessment_images_1);
+        return Storage::disk('s3')->url($this->assessment_images_1);
     }
 
     public function getImageOneUrl($width = 100, $height = 100)
     {
-        return $this->hasImageOne() ? url($this->assessment_images_1) : '';
+        return $this->hasImageOne() ? Storage::disk('s3')->url($this->assessment_images_1) : '';
     }
 
     public function getAdminImageOneUrl($width = 100, $height = 100)
     {
-        return $this->hasImageOne() ? url($this->assessment_images_1) : asset('/images/No_Image_Available.jpg');
+        return $this->hasImageOne() ? Storage::disk('s3')->url($this->assessment_images_1) : asset('/images/No_Image_Available.jpg');
     }
 
     //assessment_image_2
 
     public function getOriginalTwoAttribute()
     {
-        return $this->hasImageTwo() ? url($this->assessment_images_2) : null;
+        return $this->hasImageTwo() ? Storage::disk('s3')->url($this->assessment_images_2) : null;
     }
 
     public function getSmallPreviewTwoAttribute()
@@ -299,30 +299,30 @@ class PropertyAssessmentDetail extends Model
 
     public function hasImageTwo()
     {
-        return $this->assessment_images_2 && file_exists($this->getImageTwo());
+        return $this->assessment_images_2 && Storage::disk('s3')->exists($this->assessment_images_2);
     }
 
     public function getImageTwo()
     {
-        return storage_path('app/' . $this->assessment_images_2);
+        return Storage::disk('s3')->url($this->assessment_images_2);
     }
 
     public function getRecipientPhoto($width = 100, $height = 100, $options = ['crop'])
     {
-        return Storage::has($this->demand_note_recipient_photo) ? url($this->demand_note_recipient_photo, $width, $height, $options) : asset('images/person-placer.png');
+        return Storage::disk('s3')->exists($this->demand_note_recipient_photo) ? Storage::disk('s3')->url($this->demand_note_recipient_photo) : asset('images/person-placer.png');
     }
 
     public function getImageTwoUrl($width = 100, $height = 100)
     {
-        return $this->hasImageTwo() ? url($this->assessment_images_2) : '';
+        return $this->hasImageTwo() ? Storage::disk('s3')->url($this->assessment_images_2) : '';
     }
 
     public function getImageAnyUrl($width = 100, $height = 100, $resize = false)
     {
         if($this->hasImageOne()){
-            return url($this->assessment_images_1);
+            return Storage::disk('s3')->url($this->assessment_images_1);
         }elseif($this->hasImageTwo()){
-            return url($this->assessment_images_2);
+            return Storage::disk('s3')->url($this->assessment_images_2);
         }else{
             return url("District/council_logo.jpg");
         }
@@ -330,7 +330,7 @@ class PropertyAssessmentDetail extends Model
 
     public function getAdminImageTwoUrl($width = 100, $height = 100)
     {
-        return $this->hasImageTwo() ? url($this->assessment_images_2) : asset('/images/No_Image_Available.jpg');
+        return $this->hasImageTwo() ? Storage::disk('s3')->url($this->assessment_images_2) : asset('/images/No_Image_Available.jpg');
     }
 
     public function getCurrentYearAssessmentAmount()

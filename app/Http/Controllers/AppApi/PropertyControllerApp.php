@@ -57,6 +57,7 @@ use App\UserAssignedProperty;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Traits\FileUploadTrait;
 use App\Models\MillRate;
 use App\Models\OccupancyDetail;
 use App\Models\Property_occupancies;
@@ -69,6 +70,7 @@ ini_set('memory_limit','512M');
 
 class PropertyControllerApp extends Controller
 {
+    use FileUploadTrait;
 
 
 
@@ -152,10 +154,7 @@ class PropertyControllerApp extends Controller
 
             // Define a unique name with directory structure
             $filePath = 'property/delivered/image';
-            $fileName = uniqid() . '.' . $file->getClientOriginalExtension(); // e.g., 7Y83SbHt7r.jpg
-
-            // Store the file under storage/app/public/property/delivered/image
-            $path = $file->storeAs($filePath, $fileName, 'public');
+            $path = $this->uploadFile($file, $filePath);
 
             // Optionally: save the path to DB
             $property->delivered_image = $path;
@@ -198,16 +197,14 @@ class PropertyControllerApp extends Controller
 
 			if ($request->hasFile('landlord_image')) {
 			    if ($landlord->hasImage()) {
-			        @unlink($landlord->getImage()); // Use @unlink to suppress error if file doesn't exist
+			        $this->deleteFile($landlord->image);
 			    }
 
 			    // $landlordImagePath = @$request->file('landlord_image')->store(Property::ASSESSMENT_IMAGE);
 
 			    $file = $request->file('landlord_image');
                 $filePath = 'property/landlord_image/image';
-                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
-
-                $landlordImagePath = $file->storeAs($filePath, $fileName, 'public');
+                $landlordImagePath = $this->uploadFile($file, $filePath);
 
 			}
 
@@ -460,7 +457,7 @@ class PropertyControllerApp extends Controller
                 $fileName = uniqid() . '.' . $file->getClientOriginalExtension(); // e.g., 7Y83SbHt7r.jpg
 
                 // Store the file under storage/app/public/property/assessment/image
-                $path = $file->storeAs($filePath, $fileName, 'public');
+                $path = $this->uploadFile($file, $filePath);
 
                 // Optionally: save the path to DB
                 $assessmentModel->assessment_images_1 = $path;
@@ -476,7 +473,7 @@ class PropertyControllerApp extends Controller
                 $fileName = uniqid() . '.' . $file->getClientOriginalExtension(); // e.g., 7Y83SbHt7r.jpg
 
                 // Store the file under storage/app/public/property/assessment/image
-                $path = $file->storeAs($filePath, $fileName, 'public');
+                $path = $this->uploadFile($file, $filePath);
 
                 // Optionally: save the path to DB
                 $assessmentModel->assessment_images_2 = $path;
@@ -691,7 +688,7 @@ class PropertyControllerApp extends Controller
 
 					    // Delete old image if exists
 					    if ($existingRegistry && $existingRegistry->image && $existingRegistry->hasImage()) {
-					        @unlink($existingRegistry->getImage());
+					        $this->deleteFile($existingRegistry->image);
 					    }
 
 					  
@@ -699,7 +696,7 @@ class PropertyControllerApp extends Controller
 					     $filePath = 'property/meter/image';
 					    $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
 
-					    $imagePath = $file->storeAs($filePath, $fileName, 'public');
+					    $imagePath = $this->uploadFile($file, $filePath);
 					}
 
 
@@ -725,7 +722,7 @@ class PropertyControllerApp extends Controller
 			    if ($registryToDelete) {
 			        // Delete image file if it exists
 			        if ($registryToDelete->image && $registryToDelete->hasImage()) {
-			            @unlink($registryToDelete->getImage());
+			            $this->deleteFile($registryToDelete->image);
 			        }
 
 			        // Delete the registry meter record
@@ -1465,7 +1462,7 @@ public function get_all_variable_datas(){
         $inaccessible_property_img = null;
         try {
             if ($request->hasFile('inaccessible_property_image')) {
-                $inaccessible_property_img = $request->inaccessible_property_image->store(InaccessibleProperty::INACCESSBILE_PROPERTY_IMAGE);
+                $inaccessible_property_img = $this->uploadFile($request->inaccessible_property_image, 'property/inaccessible/image');
             }
         }catch(Exception $e){
             echo $e->getMessage();

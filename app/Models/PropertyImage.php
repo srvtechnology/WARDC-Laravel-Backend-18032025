@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Folklore\Image\Facades\Image;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Model;
 
 class PropertyImage extends Model
@@ -26,16 +26,16 @@ class PropertyImage extends Model
 
     public function hasImage()
     {
-        return $this->image && file_exists($this->getImage());
+        return $this->image && Storage::disk('s3')->exists($this->image);
     }
 
     public function getImage()
     {
-        return storage_path('app/' . $this->image);
+        return Storage::disk('s3')->url($this->image);
     }
 
     public function getImageUrl($width = 100, $height = 100)
     {
-        return $this->hasImage() ? url(Image::url($this->image, $width, $height, ['crop'])) : null;
+        return $this->hasImage() ? Storage::disk('s3')->url($this->image) : null;
     }
 }

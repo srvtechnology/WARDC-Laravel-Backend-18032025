@@ -61,8 +61,10 @@ use Stichoza\GoogleTranslate\GoogleTranslate;
 use Twilio\Rest\Client as TwilioRestClient;
 use Illuminate\Support\Str;
 use Throwable;
+use App\Traits\FileUploadTrait;
 
 class ApiController extends Controller {
+    use FileUploadTrait;
 
     private string $uploadFolder;
 
@@ -146,7 +148,7 @@ class ApiController extends Controller {
                 }
                 $user = User::updateOrCreate([...$unique], [
                     ...$request->all(),
-                    'profile' => $request->hasFile('profile') ? $request->file('profile')->store('user_profile', 'public') : $request->profile,
+                    'profile' => $request->hasFile('profile') ? $this->uploadFile($request->file('profile'), 'user_profile') : $request->profile,
                 ]);
                 SocialLogin::updateOrCreate([
                     'type'    => $request->type,

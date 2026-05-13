@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Folklore\Image\Facades\Image;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Model;
 // use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -49,17 +49,17 @@ class PropertyGeoRegistry extends Model
 
     public function hasMeterImage()
     {
-        return $this->meter_images && file_exists($this->geMetertImage());
+        return $this->meter_images && Storage::disk('s3')->exists($this->meter_images);
     }
 
     public function geMetertImage()
     {
-        return storage_path('app/' . $this->meter_images);
+        return Storage::disk('s3')->url($this->meter_images);
     }
 
     public function getMeterImageUrl($width = 100, $height = 100)
     {
-        return $this->hasMeterImage() ? url(Image::url(($this->meter_images), $width, $height, ['crop'])) : null;
+        return $this->hasMeterImage() ? Storage::disk('s3')->url($this->meter_images) : null;
     }
 
     public function getDigitalAddress()

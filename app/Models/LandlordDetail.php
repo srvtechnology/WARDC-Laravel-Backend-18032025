@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Folklore\Image\Facades\Image;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Notifications\Notifiable;
 // use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -115,17 +116,17 @@ class LandlordDetail extends Model
 
     public function hasImage()
     {
-        return $this->image && file_exists($this->getImage());
+        return $this->image && Storage::disk('s3')->exists($this->image);
     }
 
     public function getImage()
     {
-        return storage_path('app/' . $this->image);
+        return Storage::disk('s3')->url($this->image);
     }
 
     public function getImageUrl($width = 100, $height = 100)
     {
-        return $this->hasImage() ? url(Image::url($this->image, $width, $height, ['crop'])) :  null;
+        return $this->hasImage() ? Storage::disk('s3')->url($this->image) :  null;
     }
 
     public function boundryDelimetation()
@@ -144,17 +145,17 @@ class LandlordDetail extends Model
 
     public function getDocumentImage()
     {
-        return storage_path('app/' . $this->document_image);
+        return Storage::disk('s3')->url($this->document_image);
     }
 
     public function hasDocumentImage()
     {
-        return (bool) $this->document_image && file_exists($this->getDocumentImage());
+        return (bool) $this->document_image && Storage::disk('s3')->exists($this->document_image);
     }
 
     public function getDocumentImagePath($width = 800, $height = 800)
     {
-        return $this->hasDocumentImage() ? url(Image::url($this->document_image, $width, $height, [])) : null;   
+        return $this->hasDocumentImage() ? Storage::disk('s3')->url($this->document_image) : null;   
     }
 
 
@@ -170,17 +171,17 @@ class LandlordDetail extends Model
 
     public function getAddressImage()
     {
-        return storage_path('app/' . $this->address_image);
+        return Storage::disk('s3')->url($this->address_image);
     }
 
     public function hasAddressImage()
     {
-        return (bool) $this->address_image && file_exists($this->getAddressImage());
+        return (bool) $this->address_image && Storage::disk('s3')->exists($this->address_image);
     }
 
     public function getAddressImagePath($width = 800, $height = 800)
     {
-        return $this->hasAddressImage() ? url(Image::url($this->address_image, $width, $height, [])) : null;   
+        return $this->hasAddressImage() ? Storage::disk('s3')->url($this->address_image) : null;   
     }
 
 
@@ -194,17 +195,17 @@ class LandlordDetail extends Model
 
     public function getConveyanceImage()
     {
-        return storage_path('app/' . $this->conveyance_image);
+        return Storage::disk('s3')->url($this->conveyance_image);
     }
 
     public function hasConveyanceImage()
     {
-        return (bool) $this->conveyance_image && file_exists($this->getConveyanceImage());
+        return (bool) $this->conveyance_image && Storage::disk('s3')->exists($this->conveyance_image);
     }
 
     public function getConveyanceImagePath($width = 800, $height = 800)
     {
-        return $this->hasConveyanceImage() ? url(Image::url($this->conveyance_image, $width, $height, [])) : null;   
+        return $this->hasConveyanceImage() ? Storage::disk('s3')->url($this->conveyance_image) : null;   
     }
 }
 

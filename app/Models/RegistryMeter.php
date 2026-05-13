@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Folklore\Image\Facades\Image;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Model;
 // use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -36,7 +36,7 @@ class RegistryMeter extends Model
     }
     public function getOriginalAttribute()
     {
-        return $this->hasImage() ? url(Image::url($this->image)) : url(asset('/images/No_Image_Available.jpg'), 100, 100, ['crop']);
+        return $this->hasImage() ? Storage::disk('s3')->url($this->image) : asset('/images/No_Image_Available.jpg');
     }
 
     public function getLargePreviewAttribute()
@@ -46,17 +46,17 @@ class RegistryMeter extends Model
 
     public function hasImage()
     {
-        return $this->image && file_exists($this->getImage());
+        return $this->image && Storage::disk('s3')->exists($this->image);
     }
 
     public function getImage()
     {
-        return storage_path('app/' . $this->image);
+        return Storage::disk('s3')->url($this->image);
     }
 
     public function getImageUrl($width = 100, $height = 100)
     {
-        return $this->hasImage() ? url(Image::url($this->image, $width, $height, ['crop'])) : url(asset('/images/No_Image_Available.jpg'), $width, $height, ['crop']);
+        return $this->hasImage() ? Storage::disk('s3')->url($this->image) : asset('/images/No_Image_Available.jpg');
     }
 
     public function property()

@@ -17,9 +17,11 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\PropertyAssessmentDetail;
 use Illuminate\Support\Facades\Validator;
 use Spatie\Activitylog\Models\Activity;
+use App\Traits\FileUploadTrait;
 
 class PaymentController extends Controller
 {
+    use FileUploadTrait;
    
 
 
@@ -158,8 +160,7 @@ class PaymentController extends Controller
         if ($request->payment_year != (int) date('Y')) {
             if (@$request->image) {
                 $image = @$request->image;
-                $filename = time() . '-' . rand(1000, 9999) . '.' . $image->getClientOriginalExtension();
-                $image->move('storage/app/public/adjustPayment', $filename);
+                $filename = $this->uploadFile($image, 'adjustPayment');
             }
 
             $insPa = new PaymentAjdustDetails();

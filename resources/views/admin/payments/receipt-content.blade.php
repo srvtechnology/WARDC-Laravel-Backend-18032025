@@ -38,10 +38,10 @@
                                     alt="">
                             @else
                             @if(@$assessment->assessment_images_1)
-                                <img style="padding: 0 15px;" src="https://www.wardc.online/apis/storage/app/public/{{ @$assessment->assessment_images_1 }}"
+                                <img style="padding: 0 15px;" src="https://wardc-assets-prod.s3.ap-south-1.amazonaws.com/{{ @$assessment->assessment_images_1 }}"
                                     alt="">
                                 @else
-                                <img style="padding: 0 15px;" src="https://www.wardc.online/apis/storage/app/public/{{ @$assessment->assessment_images_2 }}"
+                                <img style="padding: 0 15px;" src="https://wardc-assets-prod.s3.ap-south-1.amazonaws.com/{{ @$assessment->assessment_images_2 }}"
                                     alt="">
                                 @endif
                             @endif
