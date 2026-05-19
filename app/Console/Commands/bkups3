@@ -62,30 +62,14 @@ class MigrateImagesToS3 extends Command
             $directory = new RecursiveDirectoryIterator($searchPath, RecursiveDirectoryIterator::SKIP_DOTS);
             $iterator = new RecursiveIteratorIterator($directory, RecursiveIteratorIterator::SELF_FIRST);
 
-            $this->info("Scanning files in {$searchPath} to sort by oldest...");
-            $files = [];
+            $counts = [];
 
             foreach ($iterator as $file) {
                 if ($file->isDir()) {
                     continue;
                 }
-                $files[] = [
-                    'path' => $file->getPathname(),
-                    'time' => $file->getMTime(),
-                    'filename' => $file->getFilename()
-                ];
-            }
 
-            $this->info("Sorting " . count($files) . " files by oldest first...");
-            usort($files, function ($a, $b) {
-                return $a['time'] <=> $b['time'];
-            });
-
-            $counts = [];
-
-            foreach ($files as $fileData) {
-                $fullPath = $fileData['path'];
-                $filename = $fileData['filename'];
+                $fullPath = $file->getPathname();
                 
                 // For 'public', S3 path starts AFTER 'public/'
                 // For 'user', S3 path starts WITH 'user/'
@@ -123,7 +107,7 @@ class MigrateImagesToS3 extends Command
                     if ($result) {
                         $counts[$folderName]++;
                         $totalUploaded++;
-                        $this->info("  ✓ Uploaded: " . $filename . " -> " . $s3Path);
+                        $this->info("  ✓ Uploaded: " . $file->getFilename() . " -> " . $s3Path);
                     } else {
                         $this->error("Failed to upload: {$s3Path}");
                     }
