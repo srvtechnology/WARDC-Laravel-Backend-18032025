@@ -12,10 +12,34 @@ use App\Models\District;
 class PdfGeneratorController extends Controller
 {
 
+    /**
+     * Set runtime limits so heavy exports never hit 504 or PHP timeout.
+     * Call this at the top of every export method.
+     */
+    private function prepareForHeavyTask(): void
+    {
+        // Remove PHP execution time limit
+        set_time_limit(0);
+
+        // Allow up to 512 MB RAM for large batches
+        ini_set('memory_limit', '512M');
+
+        // Keep processing even if the browser disconnects
+        ignore_user_abort(true);
+
+        // Flush any existing output buffers so memory is not wasted
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+    }
+
+
 
 
 public function pdfGenerator(Request $request)
 {
+    $this->prepareForHeavyTask();
+
     try {
         $ids = $request->input('ids');
         $year = $request->input('year');
@@ -28,41 +52,51 @@ public function pdfGenerator(Request $request)
             $year = 2019;
         }
 
-        // Filter properties with assessments created in the given year
-        $properties = Property::whereIn('id', $ids)
-            ->whereHas('assessment', function ($query) use ($year) {
-                $query->whereYear('created_at', $year);
-            })
-            ->with([
-                'assessment' => function ($query) use ($year) {
-                    $query->whereYear('created_at', $year)
-                        ->with('categories', 'types', 'valuesAdded', 'dimension', 'wallMaterial', 'roofMaterial', 'payments');
-                }
-            ])
-            ->latest()
-            ->get();
+        // Chunk IDs to avoid a single massive query (process 100 at a time)
+        $allProperties = collect();
+        foreach (array_chunk($ids, 100) as $chunk) {
+            $chunk = Property::whereIn('id', $chunk)
+                ->whereHas('assessment', function ($query) use ($year) {
+                    $query->whereYear('created_at', $year);
+                })
+                ->with([
+                    'assessment' => function ($query) use ($year) {
+                        $query->whereYear('created_at', $year)
+                            ->with('categories', 'types', 'valuesAdded', 'dimension', 'wallMaterial', 'roofMaterial', 'payments');
+                    }
+                ])
+                ->latest()
+                ->get();
+            $allProperties = $allProperties->merge($chunk);
+        }
 
-        if ($properties->isEmpty()) {
+        if ($allProperties->isEmpty()) {
             return response()->json(['error' => 'No properties Assessment found for year ' . $year], 404);
         }
 
         $html = view('admin.payments.bulk-receipt', [
-            'properties' => $properties,
-            'year' => $year,
+            'properties' => $allProperties,
+            'year'       => $year,
         ])->render();
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)->setPaper('A4')->setOptions(['isRemoteEnabled' => true]);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
+            ->setPaper('A4')
+            ->setOptions(['isRemoteEnabled' => true, 'isHtml5ParserEnabled' => true]);
 
-        return response($pdf->output(), 200, [
-            'Content-Type' => 'application/pdf',
+        $pdfOutput = $pdf->output();
+        unset($html, $allProperties); // free memory before streaming
+
+        return response($pdfOutput, 200, [
+            'Content-Type'        => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="bulk-receipt-' . now()->format('Ymd-His') . '.pdf"',
+            'Content-Length'      => strlen($pdfOutput),
         ]);
 
     } catch (\Exception $e) {
         \Log::error('PDF generation failed: ' . $e->getMessage());
         return response()->json([
-            'error' => 'PDF generation failed',
-            'message' => $e->getMessage()
+            'error'   => 'PDF generation failed',
+            'message' => $e->getMessage(),
         ], 500);
     }
 }
@@ -75,6 +109,8 @@ public function pdfGenerator(Request $request)
 
 public function pdfEnvelope(Request $request)
 {
+    $this->prepareForHeavyTask();
+
     try {
         $ids = $request->input('ids');
         $year = $request->input('year');
@@ -87,43 +123,51 @@ public function pdfEnvelope(Request $request)
             $year = date('Y');
         }
 
-        // Filter properties with assessments in the given year
-        $properties = Property::whereIn('id', $ids)
-            ->whereHas('assessment', function ($query) use ($year) {
-                $query->whereYear('created_at', $year);
-            })
-            ->with([
-                'assessment' => function ($query) use ($year) {
-                    $query->whereYear('created_at', $year)
-                        ->with('categories', 'types', 'valuesAdded', 'dimension', 'wallMaterial', 'roofMaterial', 'zone', 'swimming');
-                }
-            ])
-            ->latest()
-            ->get();
+        // Chunked fetching to avoid memory spikes
+        $allProperties = collect();
+        foreach (array_chunk($ids, 100) as $chunk) {
+            $chunk = Property::whereIn('id', $chunk)
+                ->whereHas('assessment', function ($query) use ($year) {
+                    $query->whereYear('created_at', $year);
+                })
+                ->with([
+                    'assessment' => function ($query) use ($year) {
+                        $query->whereYear('created_at', $year)
+                            ->with('categories', 'types', 'valuesAdded', 'dimension', 'wallMaterial', 'roofMaterial', 'zone', 'swimming');
+                    }
+                ])
+                ->latest()
+                ->get();
+            $allProperties = $allProperties->merge($chunk);
+        }
 
-        if ($properties->isEmpty()) {
+        if ($allProperties->isEmpty()) {
             return response()->json(['error' => 'No properties assessment found for year ' . $year], 404);
         }
 
         $html = view('admin.envelope.bulk-envelope', [
-            'properties' => $properties,
-            'year' => $year,
+            'properties' => $allProperties,
+            'year'       => $year,
         ])->render();
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
             ->setPaper('A4')
-            ->setOptions(['isRemoteEnabled' => true]);
+            ->setOptions(['isRemoteEnabled' => true, 'isHtml5ParserEnabled' => true]);
 
-        return response($pdf->output(), 200, [
-            'Content-Type' => 'application/pdf',
+        $pdfOutput = $pdf->output();
+        unset($html, $allProperties);
+
+        return response($pdfOutput, 200, [
+            'Content-Type'        => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="bulk-envelope-' . now()->format('Ymd-His') . '.pdf"',
+            'Content-Length'      => strlen($pdfOutput),
         ]);
 
     } catch (\Exception $e) {
         \Log::error('Envelope PDF generation failed: ' . $e->getMessage());
         return response()->json([
-            'error' => 'Envelope PDF generation failed',
-            'message' => $e->getMessage()
+            'error'   => 'Envelope PDF generation failed',
+            'message' => $e->getMessage(),
         ], 500);
     }
 }
@@ -136,17 +180,28 @@ public function pdfEnvelope(Request $request)
 
 public function paymentExal(Request $request)
 {
+    $this->prepareForHeavyTask();
+
     try {
         $ids = $request->input('ids');
         $year = $request->input('year') ?? date('Y');
 
-        $allProperty = Property::whereIn('id', $ids)
-            ->whereHas('assessment', function ($query) use ($year) {
-                $query->whereYear('created_at', $year);
-            })
-            ->with('assessment', 'landlord')
-            ->orderBy('id', 'desc')
-            ->get();
+        // Chunked fetching — only select columns needed for Excel
+        $allProperty = collect();
+        foreach (array_chunk($ids, 100) as $chunk) {
+            $rows = Property::select('id', 'ward')
+                ->whereIn('id', $chunk)
+                ->whereHas('assessment', function ($query) use ($year) {
+                    $query->whereYear('created_at', $year);
+                })
+                ->with([
+                    'assessment:id,property_id,property_rate_without_gst,created_at',
+                    'landlord:id,property_id,first_name,middle_name,surname,mobile_1',
+                ])
+                ->orderBy('id', 'desc')
+                ->get();
+            $allProperty = $allProperty->merge($rows);
+        }
 
         if ($allProperty->isEmpty()) {
             return response()->json(['error' => 'No data found for export'], 404);
@@ -209,24 +264,29 @@ public function paymentExal(Request $request)
 
 public function waybill(Request $request)
 {
+    $this->prepareForHeavyTask();
+
     try {
-         $ids = $request->input('ids');
+        $ids = $request->input('ids');
         $year = $request->input('year') ?? date('Y');
 
-        $properties = Property::with([
-            'landlord',
-            'assessment',
-            'assessments' => function ($query) {
-                $query->with('types', 'valuesAdded', 'categories')->latest();
-            },
-            'payments',
-            'geoRegistry',
-        ])
-        ->whereHas('assessment', function ($query) use ($year) {
-                $query->whereYear('created_at', $year);
-            })
-        ->whereIn('id', $ids)
-        ->get();
+        // Chunked loading with only needed relations
+        $properties = collect();
+        foreach (array_chunk($ids, 100) as $chunk) {
+            $rows = Property::select('id', 'ward', 'district')
+                ->with([
+                    'landlord:id,property_id,first_name,middle_name,surname,mobile_1,street_name',
+                    'assessment:id,property_id,property_rate_without_gst,due,created_at',
+                    'payments:id,property_id,amount,payee_name,created_at',
+                    'geoRegistry:id,property_id,digital_address',
+                ])
+                ->whereHas('assessment', function ($query) use ($year) {
+                    $query->whereYear('created_at', $year);
+                })
+                ->whereIn('id', $chunk)
+                ->get();
+            $properties = $properties->merge($rows);
+        }
 
         if ($properties->isEmpty()) {
             return response()->json(['error' => 'No data found for export'], 404);
@@ -326,24 +386,29 @@ public function waybill(Request $request)
 
 public function propertySummery(Request $request)
 {
+    $this->prepareForHeavyTask();
+
     try {
-         $ids = $request->input('ids');
+        $ids = $request->input('ids');
         $year = $request->input('year') ?? date('Y');
 
-        $properties = Property::with([
-            'landlord',
-            'assessment',
-            'assessments' => function ($query) {
-                $query->with('types', 'valuesAdded', 'categories')->latest();
-            },
-            'payments',
-            'geoRegistry',
-        ])
-        ->whereHas('assessment', function ($query) use ($year) {
-                $query->whereYear('created_at', $year);
-            })
-        ->whereIn('id', $ids)
-        ->get();
+        // Chunked loading with only needed relations
+        $properties = collect();
+        foreach (array_chunk($ids, 100) as $chunk) {
+            $rows = Property::select('id', 'ward', 'district')
+                ->with([
+                    'landlord:id,property_id,first_name,middle_name,surname,mobile_1,street_name',
+                    'assessment:id,property_id,property_rate_without_gst,due,created_at',
+                    'payments:id,property_id,amount,payee_name,created_at',
+                    'geoRegistry:id,property_id,digital_address',
+                ])
+                ->whereHas('assessment', function ($query) use ($year) {
+                    $query->whereYear('created_at', $year);
+                })
+                ->whereIn('id', $chunk)
+                ->get();
+            $properties = $properties->merge($rows);
+        }
 
         if ($properties->isEmpty()) {
             return response()->json(['error' => 'No data found for export'], 404);
@@ -443,8 +508,11 @@ public function propertySummery(Request $request)
 
 
 
-public function singleEnvelopeGenerator(Request $request){
-  try {
+public function singleEnvelopeGenerator(Request $request)
+{
+    $this->prepareForHeavyTask();
+
+    try {
         $id = $request->input('id');
         $year = $request->input('year');
 
@@ -452,18 +520,17 @@ public function singleEnvelopeGenerator(Request $request){
             $year = date('Y');
         }
 
-        // Filter property with assessments in the given year
-       $property = Property::where('id', $id)
-                ->with([
-                    'occupancy',
-                    'types',
-                    'geoRegistry',
-                    'user',
-                    'assessments' => function ($query) use ($year) {
-                        $query->whereYear('created_at', $year);
-                    }
-                ])
-                ->first();
+        $property = Property::where('id', $id)
+            ->with([
+                'occupancy',
+                'types',
+                'geoRegistry',
+                'user',
+                'assessments' => function ($query) use ($year) {
+                    $query->whereYear('created_at', $year);
+                },
+            ])
+            ->first();
 
         if (!$property) {
             return response()->json(['error' => 'No property found for year ' . $year], 404);
@@ -478,28 +545,31 @@ public function singleEnvelopeGenerator(Request $request){
         $district = District::where('name', $property->district)->first();
 
         $html = view('admin.envelope.single-envelope', [
-            'property' => $property,
-            'year' => $year,
-            'paymentInQuarter'=>$paymentInQuarter,
-            'assessment'=>$assessment,
-            'district'=>$district,
-
+            'property'         => $property,
+            'year'             => $year,
+            'paymentInQuarter' => $paymentInQuarter,
+            'assessment'       => $assessment,
+            'district'         => $district,
         ])->render();
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
             ->setPaper('A4')
-            ->setOptions(['isRemoteEnabled' => true]);
+            ->setOptions(['isRemoteEnabled' => true, 'isHtml5ParserEnabled' => true]);
 
-        return response($pdf->output(), 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="bulk-envelope-' . now()->format('Ymd-His') . '.pdf"',
+        $pdfOutput = $pdf->output();
+        unset($html);
+
+        return response($pdfOutput, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="single-envelope-' . now()->format('Ymd-His') . '.pdf"',
+            'Content-Length'      => strlen($pdfOutput),
         ]);
 
     } catch (\Exception $e) {
         \Log::error('Envelope PDF generation failed: ' . $e->getMessage());
         return response()->json([
-            'error' => 'Envelope PDF generation failed',
-            'message' => $e->getMessage()
+            'error'   => 'Envelope PDF generation failed',
+            'message' => $e->getMessage(),
         ], 500);
     }
 }
