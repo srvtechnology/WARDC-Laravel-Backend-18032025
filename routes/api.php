@@ -24,10 +24,11 @@ Route::middleware([CheckSanctumToken::class])->group(function () {
     Route::post('/admin/profile', [AuthController::class, 'profile']);
 
 
-   // property list and details
+    // property list and details
     Route::any('/admin/property-listing',[PropertyController::class,'index']);
      Route::any('/admin/property-listing-new',[PropertyController::class,'indexNew']);
     Route::post('/property/details',[PropertyController::class,'propertyDetails']);
+    Route::post('/property/delete',[PropertyController::class,'destroy']);
 
     // landloard edit
      Route::post('/landloard/update',[PropertyController::class,'updateLandlord']);

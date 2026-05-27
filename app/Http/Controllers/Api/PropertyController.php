@@ -890,6 +890,43 @@ public function propertyDetails(Request $request){
 }
 
 
+public function destroy(Request $request)
+{
+    try {
+        $validator = Validator::make($request->all(), [
+            'property_id' => 'required|exists:properties,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $property = Property::find($request->property_id);
+        if (!$property) {
+            return response()->json([
+                'success' => false,
+                'message' => "Property not found.",
+            ], 404);
+        }
+
+        $property->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Property deleted successfully.",
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
 
 
 
