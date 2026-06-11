@@ -975,6 +975,8 @@ public function updateLandlord(Request $request)
         'id_type' => 'nullable|string|max:255',
         'id_number' => 'nullable|string|max:255',
         'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+        'mobile_1' => 'nullable|string|max:255',
+        'mobile_2' => 'nullable|string|max:255',
 
         'ward' => 'required|string',
         'constituency' => 'required|string',
@@ -1047,6 +1049,8 @@ public function updateLandlord(Request $request)
             'email'=>@$request->email,
             'id_number'=>@$request->id_number,
             'id_type'=>@$request->id_type,
+            'mobile_1'=>@$request->mobile_1,
+            'mobile_2'=>@$request->mobile_2,
         ];
 
         if (!$isOrganization) {
